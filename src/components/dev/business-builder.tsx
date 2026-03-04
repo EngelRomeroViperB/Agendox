@@ -276,6 +276,26 @@ export function BusinessBuilder({ mode, initialData }: BusinessBuilderProps) {
         const data = await res.json()
         if (!res.ok) throw new Error(data.error)
 
+        // Crear admin si se proporcionaron credenciales (también en edit)
+        if (adminEmail && adminPassword && businessId) {
+          const adminRes = await fetch('/api/auth/create-business-admin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: adminEmail,
+              password: adminPassword,
+              business_id: businessId,
+              role: 'owner',
+            }),
+          })
+          if (!adminRes.ok) {
+            const adminData = await adminRes.json()
+            toast.error('Negocio actualizado pero error al crear admin: ' + adminData.error)
+          } else {
+            toast.success('Admin creado exitosamente')
+          }
+        }
+
         toast.success('Negocio actualizado exitosamente')
       }
     } catch (err) {
