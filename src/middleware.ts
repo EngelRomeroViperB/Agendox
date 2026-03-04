@@ -51,7 +51,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/admin/login', request.url))
     }
 
-    const userRole = session.user?.user_metadata?.role
+    const userRole = session.user?.app_metadata?.role
     if (userRole !== 'superadmin') {
       return NextResponse.redirect(new URL('/admin/dashboard', request.url))
     }

@@ -36,7 +36,7 @@ export default function AdminLogin() {
     const user = data.user
 
     // Verificar si es superadmin
-    if (user?.user_metadata?.role === 'superadmin') {
+    if (user?.app_metadata?.role === 'superadmin') {
       router.push('/dev')
       return
     }

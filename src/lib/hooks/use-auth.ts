@@ -34,7 +34,7 @@ export function useAuth() {
       const user = session.user
 
       // Verificar si es superadmin
-      if (user.user_metadata?.role === 'superadmin') {
+      if (user.app_metadata?.role === 'superadmin') {
         setAuthState({ user, role: 'superadmin', businessId: null, loading: false })
         return
       }
@@ -68,7 +68,7 @@ export function useAuth() {
 
       const user = session.user
 
-      if (user.user_metadata?.role === 'superadmin') {
+      if (user.app_metadata?.role === 'superadmin') {
         setAuthState({ user, role: 'superadmin', businessId: null, loading: false })
         return
       }
