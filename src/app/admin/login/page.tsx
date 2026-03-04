@@ -1,10 +1,108 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { toast } from 'sonner'
+
 export default function AdminLogin() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const router = useRouter()
+  const supabase = createClient()
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (error) {
+      toast.error('Error al iniciar sesión', {
+        description: error.message,
+      })
+      setLoading(false)
+      return
+    }
+
+    const user = data.user
+
+    // Verificar si es superadmin
+    if (user?.user_metadata?.role === 'superadmin') {
+      router.push('/dev')
+      return
+    }
+
+    // Buscar en business_users para determinar rol
+    const { data: businessUser, error: buError } = await supabase
+      .from('business_users')
+      .select('business_id, role')
+      .eq('id', user?.id)
+      .single()
+
+    if (buError || !businessUser) {
+      toast.error('No se encontró un negocio asociado a este usuario')
+      await supabase.auth.signOut()
+      setLoading(false)
+      return
+    }
+
+    if (businessUser.role === 'employee') {
+      router.push('/admin/appointments')
+    } else {
+      router.push('/admin/dashboard')
+    }
+  }
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-8">
-      <h1 className="text-3xl font-bold mb-4">Iniciar Sesión</h1>
-      <p className="text-muted-foreground">
-        Pantalla 2.1 — Login con correo y contraseña (Supabase Auth)
-      </p>
+    <div className="flex items-center justify-center min-h-screen bg-background p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold">Agendox</CardTitle>
+          <CardDescription>
+            Ingresa tus credenciales para acceder al panel de administración
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Correo electrónico</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="admin@ejemplo.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={loading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Contraseña</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Ingresando...' : 'Iniciar Sesión'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
-  );
+  )
 }
