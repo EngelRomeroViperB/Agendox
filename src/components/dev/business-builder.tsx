@@ -129,12 +129,14 @@ export function BusinessBuilder({ mode, initialData }: BusinessBuilderProps) {
   )
 
   // Sección F — Servicios Iniciales
+  const initialServiceCount = initialData?.services?.length || 0
   const [services, setServices] = useState<ServiceInput[]>(
     initialData?.services || []
   )
   const [newService, setNewService] = useState<ServiceInput>({ name: '', duration_minutes: 30, price: 0 })
 
   // Sección G — Staff Inicial
+  const initialStaffCount = initialData?.staff?.length || 0
   const [staffList, setStaffList] = useState<StaffInput[]>(
     initialData?.staff || []
   )
@@ -275,6 +277,26 @@ export function BusinessBuilder({ mode, initialData }: BusinessBuilderProps) {
         })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error)
+
+        // Crear solo servicios NUEVOS (los que se agregaron después de cargar)
+        const newServices = services.slice(initialServiceCount)
+        if (newServices.length > 0 && businessId) {
+          await fetch('/api/services', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ business_id: businessId, services: newServices }),
+          })
+        }
+
+        // Crear solo staff NUEVO (los que se agregaron después de cargar)
+        const newStaffMembers = staffList.slice(initialStaffCount)
+        if (newStaffMembers.length > 0 && businessId) {
+          await fetch('/api/staff', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ business_id: businessId, staff: newStaffMembers }),
+          })
+        }
 
         // Crear admin si se proporcionaron credenciales (también en edit)
         if (adminEmail && adminPassword && businessId) {

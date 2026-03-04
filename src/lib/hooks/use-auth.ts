@@ -97,6 +97,7 @@ export function useAuth() {
   const signOut = async () => {
     await supabase.auth.signOut()
     setAuthState({ user: null, role: null, businessId: null, loading: false })
+    window.location.href = '/admin/login'
   }
 
   return { ...authState, signOut }
