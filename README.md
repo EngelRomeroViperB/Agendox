@@ -1,36 +1,117 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Agendox
 
-## Getting Started
+Plataforma SaaS multi-tenant de agendamiento de citas. Cada negocio obtiene su propio portal público personalizable, panel de administración y sistema de reservas.
 
-First, run the development server:
+## Stack
+
+- **Framework**: Next.js 14 (App Router)
+- **UI**: Tailwind CSS + shadcn/ui + Lucide icons
+- **Backend**: Supabase (Auth, Database, Storage)
+- **Email**: Resend
+- **Lenguaje**: TypeScript
+
+## Estructura del proyecto
+
+```
+src/
+├── app/
+│   ├── [businessSlug]/    # Portal público del negocio
+│   │   ├── page.tsx       # Landing page
+│   │   ├── book/          # Wizard de reservas
+│   │   ├── confirmation/  # Confirmación de cita
+│   │   └── my-appointment/# Consulta/cancelación
+│   ├── admin/             # Panel de administración
+│   │   ├── dashboard/     # Dashboard con calendario
+│   │   ├── appointments/  # Gestión de citas
+│   │   ├── staff/         # Profesionales
+│   │   ├── services/      # Servicios
+│   │   ├── employees/     # Cuentas de empleados
+│   │   ├── clients/       # Clientes
+│   │   ├── reports/       # Reportes y analytics
+│   │   ├── subscription/  # Plan y facturación
+│   │   └── settings/      # Configuración
+│   ├── dev/               # Panel de superadmin
+│   │   ├── businesses/    # CRUD de negocios
+│   │   └── subscriptions/ # Gestión de suscripciones
+│   └── api/               # API Routes
+├── components/
+│   ├── ui/                # Componentes shadcn/ui + MiniCalendar
+│   ├── admin/             # Sidebar admin
+│   └── dev/               # Sidebar dev + BusinessBuilder
+├── lib/
+│   ├── supabase/          # Clientes Supabase (client/server)
+│   ├── hooks/             # useAuth
+│   ├── context/           # BusinessProvider
+│   ├── email/             # Resend templates y envío
+│   └── types/             # TypeScript interfaces
+└── supabase/
+    └── migrations/        # SQL migrations (001-005)
+```
+
+## Setup local
+
+### 1. Instalar dependencias
+
+```bash
+npm install
+```
+
+### 2. Configurar variables de entorno
+
+```bash
+cp .env.example .env.local
+```
+
+Editar `.env.local` con tus credenciales de Supabase y Resend.
+
+### 3. Configurar base de datos
+
+Ejecutar las migraciones en orden en el SQL Editor de Supabase:
+
+1. `supabase/migrations/001_initial_schema.sql`
+2. `supabase/migrations/002_storage.sql`
+3. `supabase/migrations/003_staff_services.sql`
+4. `supabase/migrations/004_employee_staff_link.sql`
+5. `supabase/migrations/005_subscriptions.sql`
+
+### 4. Crear usuario superadmin
+
+En Supabase Dashboard → Authentication → Users, crear un usuario y luego en SQL Editor:
+
+```sql
+UPDATE auth.users SET raw_app_meta_data = raw_app_meta_data || '{"role": "superadmin"}' WHERE email = 'tu@email.com';
+```
+
+### 5. Iniciar servidor de desarrollo
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Variables de entorno
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | Descripción | Requerida |
+|----------|------------|-----------|
+| `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto Supabase | ✅ |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clave anónima de Supabase | ✅ |
+| `SUPABASE_SERVICE_ROLE_KEY` | Clave de servicio (server-side) | ✅ |
+| `RESEND_API_KEY` | API Key de Resend | Opcional |
+| `RESEND_FROM_EMAIL` | Email remitente (ej: `Agendox <noreply@tudominio.com>`) | Opcional |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deploy en Vercel
 
-## Learn More
+1. Conectar repositorio en [vercel.com](https://vercel.com)
+2. Configurar las variables de entorno en Settings → Environment Variables
+3. Framework preset: **Next.js**
+4. Build command: `npm run build`
+5. Deploy
 
-To learn more about Next.js, take a look at the following resources:
+## Roles
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **superadmin**: Acceso completo al panel `/dev`, gestión de todos los negocios
+- **owner**: Propietario del negocio, acceso completo al panel `/admin`
+- **employee**: Empleado vinculado a un profesional, ve solo sus citas
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Licencia
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Privado — Todos los derechos reservados.
