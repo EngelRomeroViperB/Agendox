@@ -118,31 +118,39 @@ export default function BookAppointment() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="py-6 px-4" style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-secondary)' }}>
+      <div className="py-5 px-4" style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-secondary)' }}>
         <div className="max-w-3xl mx-auto">
-          <Link href={`/${business.slug}`} className="text-sm opacity-80 hover:opacity-100 flex items-center gap-1">
+          <Link href={`/${business.slug}`} className="text-sm opacity-80 hover:opacity-100 flex items-center gap-1 mb-2">
             <ArrowLeft className="h-4 w-4" /> Volver al portal
           </Link>
-          <h1 className="text-2xl font-bold mt-2">{business.name}</h1>
-          <p className="text-sm opacity-80">Agendar una cita</p>
+          <h1 className="text-xl font-bold">{business.name}</h1>
         </div>
       </div>
 
       {/* Indicador de pasos */}
       <div className="max-w-3xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-8">
-          {['Servicio', 'Profesional', 'Fecha y Hora', 'Confirmar'].map((label, i) => (
-            <div key={i} className="flex items-center gap-2">
+        <div className="flex items-center justify-between mb-8 relative">
+          <div className="absolute top-4 left-0 right-0 h-0.5 bg-gray-200" />
+          <div
+            className="absolute top-4 left-0 h-0.5 transition-all duration-300"
+            style={{
+              backgroundColor: 'var(--color-primary)',
+              width: `${((step - 1) / 3) * 100}%`,
+            }}
+          />
+          {['Servicio', 'Profesional', 'Horario', 'Confirmar'].map((label, i) => (
+            <div key={i} className="flex flex-col items-center gap-1.5 relative z-10">
               <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all shadow-sm"
                 style={{
-                  backgroundColor: step > i + 1 ? 'var(--color-primary)' : step === i + 1 ? 'var(--color-primary)' : '#e5e7eb',
+                  backgroundColor: step > i + 1 ? 'var(--color-primary)' : step === i + 1 ? 'var(--color-primary)' : '#fff',
                   color: step >= i + 1 ? 'var(--color-secondary)' : '#9ca3af',
+                  border: step <= i ? '2px solid #e5e7eb' : 'none',
                 }}
               >
                 {step > i + 1 ? <Check className="h-4 w-4" /> : i + 1}
               </div>
-              <span className="text-sm hidden sm:inline">{label}</span>
+              <span className={`text-xs ${step >= i + 1 ? 'font-medium' : 'text-muted-foreground'}`}>{label}</span>
             </div>
           ))}
         </div>
@@ -155,15 +163,20 @@ export default function BookAppointment() {
               {services.map((svc) => (
                 <Card
                   key={svc.id}
-                  className={`cursor-pointer transition-all hover:shadow-md ${selectedService?.id === svc.id ? 'ring-2' : ''}`}
-                  style={selectedService?.id === svc.id ? { borderColor: 'var(--color-primary)' } : {}}
+                  className={`cursor-pointer transition-all hover:shadow-md overflow-hidden border-0 shadow-sm ${selectedService?.id === svc.id ? 'ring-2 shadow-md' : ''}`}
+                  style={selectedService?.id === svc.id ? { '--tw-ring-color': 'var(--color-primary)' } as React.CSSProperties : {}}
                   onClick={() => setSelectedService(svc)}
                 >
+                  {svc.image_url && (
+                    <div className="relative h-28 overflow-hidden">
+                      <img src={svc.image_url} alt={svc.name} className="w-full h-full object-cover" />
+                    </div>
+                  )}
                   <CardContent className="p-4">
                     <h3 className="font-semibold">{svc.name}</h3>
-                    <div className="flex gap-4 mt-1 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{svc.duration_minutes} min</span>
-                      <span className="flex items-center gap-1"><DollarSign className="h-3 w-3" />{Number(svc.price).toLocaleString('es-CO')}</span>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="flex items-center gap-1 text-sm text-muted-foreground"><Clock className="h-3 w-3" />{svc.duration_minutes} min</span>
+                      <span className="font-bold" style={{ color: 'var(--color-primary)' }}>${Number(svc.price).toLocaleString('es-CO')}</span>
                     </div>
                   </CardContent>
                 </Card>

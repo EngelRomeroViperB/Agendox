@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { Search, XCircle, ArrowLeft, Loader2 } from 'lucide-react'
+import { Search, XCircle, ArrowLeft, Loader2, Clock, User, Calendar, AlertTriangle } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -150,8 +150,8 @@ export default function MyAppointment() {
         )}
 
         {appointment && (
-          <Card>
-            <CardContent className="p-5 space-y-3 text-sm">
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-base">Detalles de tu cita</h3>
                 <Badge variant={STATUS_VARIANTS[appointment.status] || 'outline'}>
@@ -159,44 +159,51 @@ export default function MyAppointment() {
                 </Badge>
               </div>
               <Separator />
-              <div className="flex justify-between">
+              <div className="flex items-center gap-2 text-sm bg-muted/50 rounded-lg p-2.5">
                 <span className="text-muted-foreground">Código:</span>
-                <span className="font-mono font-bold">{appointment.confirmation_code}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Cliente:</span>
-                <span className="font-medium">{appointment.client_name}</span>
+                <span className="font-mono font-bold tracking-wider">{appointment.confirmation_code}</span>
               </div>
               {appointment.services && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Servicio:</span>
-                  <span className="font-medium">{appointment.services.name}</span>
+                <div className="flex items-center gap-3 text-sm">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-secondary)' }}>
+                    <Clock className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium">{appointment.services.name}</div>
+                    <div className="text-muted-foreground">{appointment.services.duration_minutes} min</div>
+                  </div>
                 </div>
               )}
               {appointment.staff && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Profesional:</span>
-                  <span className="font-medium">{appointment.staff.name}</span>
+                <div className="flex items-center gap-3 text-sm">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-secondary)' }}>
+                    <User className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium">{appointment.staff.name}</div>
+                    <div className="text-muted-foreground">Profesional</div>
+                  </div>
                 </div>
               )}
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Fecha:</span>
-                <span className="font-medium">
-                  {format(new Date(appointment.scheduled_at), "d 'de' MMMM, yyyy", { locale: es })}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Hora:</span>
-                <span className="font-medium">
-                  {format(new Date(appointment.scheduled_at), 'HH:mm')}
-                </span>
+              <div className="flex items-center gap-3 text-sm">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-secondary)' }}>
+                  <Calendar className="h-4 w-4" />
+                </div>
+                <div className="flex-1">
+                  <div className="font-medium">
+                    {format(new Date(appointment.scheduled_at), "EEEE d 'de' MMMM, yyyy", { locale: es })}
+                  </div>
+                  <div className="text-muted-foreground">
+                    {format(new Date(appointment.scheduled_at), 'HH:mm')} hrs
+                  </div>
+                </div>
               </div>
               {appointment.services && (
                 <>
                   <Separator />
-                  <div className="flex justify-between font-bold">
-                    <span>Precio:</span>
-                    <span>${Number(appointment.services.price).toLocaleString('es-CO')}</span>
+                  <div className="flex justify-between font-bold text-base">
+                    <span>Total:</span>
+                    <span style={{ color: 'var(--color-primary)' }}>${Number(appointment.services.price).toLocaleString('es-CO')}</span>
                   </div>
                 </>
               )}
@@ -205,6 +212,10 @@ export default function MyAppointment() {
               {appointment.status !== 'cancelled' && appointment.status !== 'completed' && (
                 <>
                   <Separator />
+                  <div className="flex items-start gap-2 text-xs text-muted-foreground bg-destructive/5 rounded-lg p-3">
+                    <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                    <span>La cancelación es inmediata y no se puede deshacer.</span>
+                  </div>
                   <Button
                     variant="destructive"
                     className="w-full"
