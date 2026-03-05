@@ -68,7 +68,7 @@ export default function AdminLogin() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Agendox</CardTitle>
           <CardDescription>
-            Ingresa tus credenciales para acceder al panel de administración
+            Inicia sesión para acceder a tu panel
           </CardDescription>
         </CardHeader>
         <CardContent>

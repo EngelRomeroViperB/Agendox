@@ -34,6 +34,19 @@ export async function POST(request: Request) {
     )
   }
 
+  // Verificar que staff y servicio estén activos
+  const [staffCheck, serviceCheck] = await Promise.all([
+    supabase.from('staff').select('is_active').eq('id', staff_id).single(),
+    supabase.from('services').select('is_active').eq('id', service_id).single(),
+  ])
+
+  if (!staffCheck.data?.is_active) {
+    return NextResponse.json({ error: 'Este profesional no está disponible' }, { status: 400 })
+  }
+  if (!serviceCheck.data?.is_active) {
+    return NextResponse.json({ error: 'Este servicio no está disponible' }, { status: 400 })
+  }
+
   const confirmation_code = generateConfirmationCode()
 
   const { data, error } = await supabase

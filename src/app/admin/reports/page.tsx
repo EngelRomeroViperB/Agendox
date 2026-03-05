@@ -46,8 +46,8 @@ export default function AdminReports() {
   useEffect(() => {
     setLoading(true)
     const now = new Date()
-    const from = startOfMonth(subMonths(now, 1)).toISOString()
-    const to = endOfMonth(now).toISOString()
+    const from = format(startOfMonth(subMonths(now, 1)), "yyyy-MM-dd'T'HH:mm:ss")
+    const to = format(endOfMonth(now), "yyyy-MM-dd'T'23:59:59")
 
     Promise.all([
       fetch(`/api/admin/reports?type=summary&months=${period}`).then(r => r.json()),

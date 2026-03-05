@@ -43,10 +43,10 @@ export default function AdminDashboard() {
   const fetchData = useCallback(() => {
     setLoading(true)
     const now = new Date()
-    const weekStart = startOfWeek(now, { weekStartsOn: 1 }).toISOString()
-    const weekEnd = endOfWeek(now, { weekStartsOn: 1 }).toISOString()
-    const monthStart = startOfMonth(selectedDate).toISOString()
-    const monthEnd = endOfMonth(selectedDate).toISOString()
+    const weekStart = format(startOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd'T'HH:mm:ss")
+    const weekEnd = format(endOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd'T'23:59:59")
+    const monthStart = format(startOfMonth(selectedDate), "yyyy-MM-dd'T'HH:mm:ss")
+    const monthEnd = format(endOfMonth(selectedDate), "yyyy-MM-dd'T'23:59:59")
 
     Promise.all([
       fetch(`/api/admin/appointments?from=${monthStart}&to=${monthEnd}`).then(r => r.json()),

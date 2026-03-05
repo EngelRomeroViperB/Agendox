@@ -4,6 +4,8 @@ import { BusinessProvider } from '@/lib/context/business-context'
 import type { BusinessContextType } from '@/lib/context/business-context'
 import { checkBusinessSubscription } from '@/lib/subscription-check'
 
+export const dynamic = 'force-dynamic'
+
 export default async function BusinessLayout({
   children,
   params,

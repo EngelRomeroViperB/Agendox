@@ -56,8 +56,8 @@ export default function AdminAppointments() {
     setLoading(true)
     const params = new URLSearchParams()
     if (statusFilter !== 'all') params.set('status', statusFilter)
-    const from = startOfMonth(selectedDate).toISOString()
-    const to = endOfMonth(selectedDate).toISOString()
+    const from = format(startOfMonth(selectedDate), "yyyy-MM-dd'T'HH:mm:ss")
+    const to = format(endOfMonth(selectedDate), "yyyy-MM-dd'T'23:59:59")
     params.set('from', from)
     params.set('to', to)
 

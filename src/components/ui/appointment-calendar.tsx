@@ -62,7 +62,7 @@ const STATUS_DOT: Record<string, string> = {
   cancelled: 'bg-red-400',
 }
 
-const HOURS = Array.from({ length: 14 }, (_, i) => i + 7) // 7:00 - 20:00
+const HOURS = Array.from({ length: 17 }, (_, i) => i + 6) // 6:00 - 22:00
 
 export function AppointmentCalendar({
   appointments,

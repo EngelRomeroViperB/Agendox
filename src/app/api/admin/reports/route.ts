@@ -33,8 +33,8 @@ export async function GET(request: Request) {
     const summaries = []
     for (let i = 0; i < months; i++) {
       const monthDate = subMonths(now, i)
-      const from = startOfMonth(monthDate).toISOString()
-      const to = endOfMonth(monthDate).toISOString()
+      const from = format(startOfMonth(monthDate), "yyyy-MM-dd'T'HH:mm:ss")
+      const to = format(endOfMonth(monthDate), "yyyy-MM-dd'T'23:59:59")
 
       const { data: appts } = await admin
         .from('appointments')
@@ -66,8 +66,8 @@ export async function GET(request: Request) {
 
   if (type === 'staff') {
     // Staff performance
-    const from = searchParams.get('from') || startOfMonth(now).toISOString()
-    const to = searchParams.get('to') || endOfMonth(now).toISOString()
+    const from = searchParams.get('from') || format(startOfMonth(now), "yyyy-MM-dd'T'HH:mm:ss")
+    const to = searchParams.get('to') || format(endOfMonth(now), "yyyy-MM-dd'T'23:59:59")
 
     const { data: appts } = await admin
       .from('appointments')
@@ -96,8 +96,8 @@ export async function GET(request: Request) {
 
   if (type === 'services') {
     // Service popularity
-    const from = searchParams.get('from') || startOfMonth(now).toISOString()
-    const to = searchParams.get('to') || endOfMonth(now).toISOString()
+    const from = searchParams.get('from') || format(startOfMonth(now), "yyyy-MM-dd'T'HH:mm:ss")
+    const to = searchParams.get('to') || format(endOfMonth(now), "yyyy-MM-dd'T'23:59:59")
 
     const { data: appts } = await admin
       .from('appointments')
@@ -126,8 +126,8 @@ export async function GET(request: Request) {
   }
 
   if (type === 'csv') {
-    const from = searchParams.get('from') || startOfMonth(now).toISOString()
-    const to = searchParams.get('to') || endOfMonth(now).toISOString()
+    const from = searchParams.get('from') || format(startOfMonth(now), "yyyy-MM-dd'T'HH:mm:ss")
+    const to = searchParams.get('to') || format(endOfMonth(now), "yyyy-MM-dd'T'23:59:59")
 
     const { data: appts } = await admin
       .from('appointments')

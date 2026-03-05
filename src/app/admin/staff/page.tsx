@@ -167,7 +167,7 @@ export default function AdminStaff() {
           <DialogTrigger asChild>
             <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Nuevo Profesional</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingId ? 'Editar Profesional' : 'Nuevo Profesional'}</DialogTitle>
             </DialogHeader>

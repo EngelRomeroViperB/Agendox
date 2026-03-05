@@ -40,15 +40,19 @@ export async function GET(request: Request) {
     .eq('business_id', businessId)
     .single()
 
-  // 3. Obtener horario del profesional
+  // 3. Obtener horario del profesional (solo si está activo)
   const { data: staffMember } = await supabase
     .from('staff')
-    .select('working_hours')
+    .select('working_hours, is_active')
     .eq('id', staffId)
     .single()
 
   if (!profile || !staffMember) {
     return NextResponse.json({ error: 'Datos no encontrados' }, { status: 404 })
+  }
+
+  if (!staffMember.is_active) {
+    return NextResponse.json([])
   }
 
   // Determinar el día de la semana en español

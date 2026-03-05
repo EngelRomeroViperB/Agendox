@@ -1,9 +1,10 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { sendReminder } from '@/lib/email/send'
+import { format } from 'date-fns'
 
-// GET: Send reminders for appointments happening in the next hour
-// Designed to be called by Vercel Cron every 15 minutes
+// GET: Send reminders for today's appointments
+// Runs daily via Vercel Cron at 7 AM UTC
 export async function GET(request: Request) {
   // Verify cron secret (optional security)
   const authHeader = request.headers.get('authorization')
@@ -14,20 +15,21 @@ export async function GET(request: Request) {
 
   const supabase = createAdminClient()
 
+  // scheduled_at es TIMESTAMP (hora local del negocio, sin timezone)
+  // Buscar citas de hoy (hora local) — el cron corre a las 7 UTC = 2 AM Colombia
   const now = new Date()
-  const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000)
-
-  // Find appointments in the next hour that haven't been reminded
-  // We use a 15-min window to avoid double-sending
-  const from = new Date(oneHourFromNow.getTime() - 15 * 60 * 1000).toISOString()
-  const to = oneHourFromNow.toISOString()
+  // Offset UTC-5 para Colombia
+  const localNow = new Date(now.getTime() - 5 * 60 * 60 * 1000)
+  const todayStr = format(localNow, 'yyyy-MM-dd')
+  const todayStart = `${todayStr}T00:00:00`
+  const todayEnd = `${todayStr}T23:59:59`
 
   const { data: appointments, error } = await supabase
     .from('appointments')
     .select('*, businesses(name, slug), services(name, price, duration_minutes), staff(name)')
     .in('status', ['pending', 'confirmed'])
-    .gte('scheduled_at', from)
-    .lte('scheduled_at', to)
+    .gte('scheduled_at', todayStart)
+    .lte('scheduled_at', todayEnd)
     .is('reminded_at', null)
 
   if (error) {

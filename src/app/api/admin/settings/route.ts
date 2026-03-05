@@ -48,11 +48,32 @@ export async function PATCH(request: Request) {
   const admin = createAdminClient()
 
   if (profile) {
-    const { error } = await admin
+    // Separar campos base de campos opcionales (migraciones 006-007)
+    const { notification_email, notification_settings, min_cancellation_hours, ...baseProfile } = profile
+
+    // Primero guardar campos base
+    const { error: baseError } = await admin
       .from('business_profiles')
-      .update(profile)
+      .update(baseProfile)
       .eq('business_id', businessId)
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (baseError) return NextResponse.json({ error: baseError.message }, { status: 400 })
+
+    // Intentar guardar campos opcionales (pueden no existir si migraciones no se han ejecutado)
+    const optionalFields: Record<string, unknown> = {}
+    if (notification_email !== undefined) optionalFields.notification_email = notification_email
+    if (notification_settings !== undefined) optionalFields.notification_settings = notification_settings
+    if (min_cancellation_hours !== undefined) optionalFields.min_cancellation_hours = min_cancellation_hours
+
+    if (Object.keys(optionalFields).length > 0) {
+      try {
+        await admin
+          .from('business_profiles')
+          .update(optionalFields)
+          .eq('business_id', businessId)
+      } catch {
+        console.log('[Settings] Optional fields not saved (migrations may not be applied yet)')
+      }
+    }
   }
 
   if (theme) {
