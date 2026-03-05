@@ -11,16 +11,20 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { ImageUpload } from '@/components/ui/image-upload'
+import { useAuth } from '@/lib/hooks/use-auth'
 
 interface Service {
   id: string
   name: string
   duration_minutes: number
   price: number
+  image_url: string | null
   is_active: boolean
 }
 
 export default function AdminServices() {
+  const { businessId } = useAuth()
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -28,6 +32,7 @@ export default function AdminServices() {
   const [name, setName] = useState('')
   const [duration, setDuration] = useState(30)
   const [price, setPrice] = useState(0)
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
 
   const fetchServices = useCallback(() => {
     setLoading(true)
@@ -39,12 +44,12 @@ export default function AdminServices() {
 
   useEffect(() => { fetchServices() }, [fetchServices])
 
-  const resetForm = () => { setName(''); setDuration(30); setPrice(0); setEditingId(null) }
+  const resetForm = () => { setName(''); setDuration(30); setPrice(0); setImageUrl(null); setEditingId(null) }
 
   const openCreate = () => { resetForm(); setDialogOpen(true) }
 
   const openEdit = (svc: Service) => {
-    setEditingId(svc.id); setName(svc.name); setDuration(svc.duration_minutes); setPrice(svc.price)
+    setEditingId(svc.id); setName(svc.name); setDuration(svc.duration_minutes); setPrice(svc.price); setImageUrl(svc.image_url)
     setDialogOpen(true)
   }
 
@@ -55,7 +60,7 @@ export default function AdminServices() {
       const res = await fetch('/api/admin/services', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: editingId, name, duration_minutes: duration, price }),
+        body: JSON.stringify({ id: editingId, name, duration_minutes: duration, price, image_url: imageUrl }),
       })
       if (res.ok) { toast.success('Servicio actualizado'); fetchServices() }
       else toast.error('Error al actualizar')
@@ -63,7 +68,7 @@ export default function AdminServices() {
       const res = await fetch('/api/admin/services', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, duration_minutes: duration, price }),
+        body: JSON.stringify({ name, duration_minutes: duration, price, image_url: imageUrl }),
       })
       if (res.ok) { toast.success('Servicio creado'); fetchServices() }
       else toast.error('Error al crear')
@@ -114,6 +119,17 @@ export default function AdminServices() {
                   <Label>Precio</Label>
                   <Input type="number" value={price} onChange={e => setPrice(parseFloat(e.target.value) || 0)} />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Imagen del servicio (opcional)</Label>
+                <ImageUpload
+                  value={imageUrl}
+                  onChange={setImageUrl}
+                  folder="service-images"
+                  businessId={businessId || undefined}
+                  aspectRatio="banner"
+                  placeholder="Subir imagen"
+                />
               </div>
               <Button className="w-full" onClick={handleSave}>Guardar</Button>
             </div>

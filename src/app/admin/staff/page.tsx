@@ -11,16 +11,20 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { ImageUpload } from '@/components/ui/image-upload'
+import { useAuth } from '@/lib/hooks/use-auth'
 
 interface StaffMember {
   id: string
   name: string
   role: string
   bio: string | null
+  photo_url: string | null
   is_active: boolean
 }
 
 export default function AdminStaff() {
+  const { businessId } = useAuth()
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -28,6 +32,7 @@ export default function AdminStaff() {
   const [name, setName] = useState('')
   const [role, setRole] = useState('')
   const [bio, setBio] = useState('')
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
 
   const fetchStaff = useCallback(() => {
     setLoading(true)
@@ -39,12 +44,12 @@ export default function AdminStaff() {
 
   useEffect(() => { fetchStaff() }, [fetchStaff])
 
-  const resetForm = () => { setName(''); setRole(''); setBio(''); setEditingId(null) }
+  const resetForm = () => { setName(''); setRole(''); setBio(''); setPhotoUrl(null); setEditingId(null) }
 
   const openCreate = () => { resetForm(); setDialogOpen(true) }
 
   const openEdit = (member: StaffMember) => {
-    setEditingId(member.id); setName(member.name); setRole(member.role); setBio(member.bio || '')
+    setEditingId(member.id); setName(member.name); setRole(member.role); setBio(member.bio || ''); setPhotoUrl(member.photo_url)
     setDialogOpen(true)
   }
 
@@ -55,7 +60,7 @@ export default function AdminStaff() {
       const res = await fetch('/api/admin/staff', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: editingId, name, role, bio }),
+        body: JSON.stringify({ id: editingId, name, role, bio, photo_url: photoUrl }),
       })
       if (res.ok) { toast.success('Profesional actualizado'); fetchStaff() }
       else toast.error('Error al actualizar')
@@ -63,7 +68,7 @@ export default function AdminStaff() {
       const res = await fetch('/api/admin/staff', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, role, bio }),
+        body: JSON.stringify({ name, role, bio, photo_url: photoUrl }),
       })
       if (res.ok) { toast.success('Profesional creado'); fetchStaff() }
       else toast.error('Error al crear')
@@ -113,6 +118,17 @@ export default function AdminStaff() {
                 <Label>Bio</Label>
                 <Input value={bio} onChange={e => setBio(e.target.value)} placeholder="Breve descripción..." />
               </div>
+              <div className="space-y-2">
+                <Label>Foto de perfil</Label>
+                <ImageUpload
+                  value={photoUrl}
+                  onChange={setPhotoUrl}
+                  folder="staff-photos"
+                  businessId={businessId || undefined}
+                  aspectRatio="square"
+                  placeholder="Subir foto"
+                />
+              </div>
               <Button className="w-full" onClick={handleSave}>Guardar</Button>
             </div>
           </DialogContent>
@@ -140,7 +156,18 @@ export default function AdminStaff() {
               <TableBody>
                 {staff.map(m => (
                   <TableRow key={m.id}>
-                    <TableCell className="font-medium">{m.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        {m.photo_url ? (
+                          <img src={m.photo_url} alt={m.name} className="w-8 h-8 rounded-full object-cover" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
+                            {m.name.charAt(0)}
+                          </div>
+                        )}
+                        {m.name}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-muted-foreground">{m.role || '—'}</TableCell>
                     <TableCell>
                       <Badge variant={m.is_active ? 'default' : 'secondary'}>

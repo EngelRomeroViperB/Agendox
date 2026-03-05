@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import { Save, Loader2, Trash2, Plus } from 'lucide-react'
+import { ImageUpload, MultiImageUpload } from '@/components/ui/image-upload'
 
 const BUSINESS_TYPES = [
   { value: 'barberia', label: 'Barbería' },
@@ -77,6 +78,7 @@ interface BusinessBuilderProps {
         break_end?: string
       }>
       post_booking_instructions?: string
+      gallery_urls?: string[]
     }
     staff?: { name: string; role: string }[]
     services?: { name: string; duration_minutes: number; price: number }[]
@@ -102,6 +104,8 @@ export function BusinessBuilder({ mode, initialData }: BusinessBuilderProps) {
   const [primaryColor, setPrimaryColor] = useState(initialData?.business_themes?.primary_color || '#000000')
   const [secondaryColor, setSecondaryColor] = useState(initialData?.business_themes?.secondary_color || '#ffffff')
   const [font, setFont] = useState(initialData?.business_themes?.font || 'Inter')
+  const [logoUrl, setLogoUrl] = useState<string | null>(initialData?.business_themes?.logo_url || null)
+  const [bannerUrl, setBannerUrl] = useState<string | null>(initialData?.business_themes?.banner_url || null)
 
   // Sección D — Información del Portal
   const [description, setDescription] = useState(initialData?.business_profiles?.description || '')
@@ -114,6 +118,9 @@ export function BusinessBuilder({ mode, initialData }: BusinessBuilderProps) {
   const [tiktok, setTiktok] = useState(initialData?.business_profiles?.social_links?.tiktok || '')
   const [postBookingInstructions, setPostBookingInstructions] = useState(
     initialData?.business_profiles?.post_booking_instructions || ''
+  )
+  const [galleryUrls, setGalleryUrls] = useState<string[]>(
+    initialData?.business_profiles?.gallery_urls || []
   )
 
   // Sección E — Horario
@@ -207,6 +214,8 @@ export function BusinessBuilder({ mode, initialData }: BusinessBuilderProps) {
           primary_color: primaryColor,
           secondary_color: secondaryColor,
           font,
+          logo_url: logoUrl,
+          banner_url: bannerUrl,
         },
         profile: {
           description,
@@ -216,6 +225,7 @@ export function BusinessBuilder({ mode, initialData }: BusinessBuilderProps) {
           social_links: { instagram, whatsapp, facebook, tiktok },
           working_hours: workingHours,
           post_booking_instructions: postBookingInstructions,
+          gallery_urls: galleryUrls,
         },
       }
 
@@ -455,6 +465,31 @@ export function BusinessBuilder({ mode, initialData }: BusinessBuilderProps) {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
+                  <Label>Logo del negocio</Label>
+                  <ImageUpload
+                    value={logoUrl}
+                    onChange={setLogoUrl}
+                    folder="logos"
+                    businessId={initialData?.id}
+                    aspectRatio="square"
+                    placeholder="Subir logo (recomendado: 200x200)"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Banner / Portada</Label>
+                  <ImageUpload
+                    value={bannerUrl}
+                    onChange={setBannerUrl}
+                    folder="banners"
+                    businessId={initialData?.id}
+                    aspectRatio="banner"
+                    placeholder="Subir banner (recomendado: 1200x400)"
+                  />
+                </div>
+              </div>
+              <Separator />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
                   <Label>Color primario</Label>
                   <div className="flex gap-2 items-center">
                     <input
@@ -587,6 +622,17 @@ export function BusinessBuilder({ mode, initialData }: BusinessBuilderProps) {
                   onChange={(e) => setPostBookingInstructions(e.target.value)}
                   placeholder="Llega 5 minutos antes de tu cita..."
                   rows={3}
+                />
+              </div>
+              <Separator />
+              <div className="space-y-2">
+                <Label>Galería de imágenes</Label>
+                <MultiImageUpload
+                  value={galleryUrls}
+                  onChange={setGalleryUrls}
+                  folder="gallery"
+                  businessId={initialData?.id}
+                  maxImages={10}
                 />
               </div>
             </CardContent>
