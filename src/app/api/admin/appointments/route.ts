@@ -5,9 +5,9 @@ import { NextResponse } from 'next/server'
 // GET: Listar citas del negocio del admin autenticado
 export async function GET(request: Request) {
   const supabase = createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
   }
 
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
   const { data: businessUser } = await admin
     .from('business_users')
     .select('business_id')
-    .eq('id', session.user.id)
+    .eq('id', user.id)
     .single()
 
   if (!businessUser) {
@@ -61,9 +61,9 @@ export async function GET(request: Request) {
 // PATCH: Actualizar estado de una cita
 export async function PATCH(request: Request) {
   const supabase = createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
   }
 
@@ -79,7 +79,7 @@ export async function PATCH(request: Request) {
   const { data: businessUser } = await admin
     .from('business_users')
     .select('business_id')
-    .eq('id', session.user.id)
+    .eq('id', user.id)
     .single()
 
   if (!businessUser) {

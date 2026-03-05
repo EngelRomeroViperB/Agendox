@@ -14,10 +14,10 @@ async function getBusinessId(userId: string) {
 // GET: Obtener perfil y configuración del negocio
 export async function GET() {
   const supabase = createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
-  const businessId = await getBusinessId(session.user.id)
+  const businessId = await getBusinessId(user.id)
   if (!businessId) return NextResponse.json({ error: 'Sin negocio' }, { status: 403 })
 
   const admin = createAdminClient()
@@ -37,10 +37,10 @@ export async function GET() {
 // PATCH: Actualizar configuración
 export async function PATCH(request: Request) {
   const supabase = createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
-  const businessId = await getBusinessId(session.user.id)
+  const businessId = await getBusinessId(user.id)
   if (!businessId) return NextResponse.json({ error: 'Sin negocio' }, { status: 403 })
 
   const body = await request.json()
