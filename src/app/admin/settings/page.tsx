@@ -36,6 +36,7 @@ export default function AdminSettings() {
   const [facebook, setFacebook] = useState('')
   const [tiktok, setTiktok] = useState('')
   const [postBookingInstructions, setPostBookingInstructions] = useState('')
+  const [minCancellationHours, setMinCancellationHours] = useState(24)
   const [notificationEmail, setNotificationEmail] = useState('')
   const [notifications, setNotifications] = useState({
     booking_confirmation: true,
@@ -57,6 +58,7 @@ export default function AdminSettings() {
         setPhone(p.phone || '')
         setEmail(p.email || '')
         setPostBookingInstructions(p.post_booking_instructions || '')
+        setMinCancellationHours(p.min_cancellation_hours ?? 24)
         setNotificationEmail(p.notification_email || '')
         if (p.notification_settings) setNotifications({ ...notifications, ...p.notification_settings })
         const sl = p.social_links || {}
@@ -87,6 +89,7 @@ export default function AdminSettings() {
           social_links: { instagram, whatsapp, facebook, tiktok },
           working_hours: workingHours,
           post_booking_instructions: postBookingInstructions,
+          min_cancellation_hours: minCancellationHours,
           notification_email: notificationEmail || null,
           notification_settings: notifications,
         },
@@ -146,6 +149,17 @@ export default function AdminSettings() {
               <div className="space-y-2">
                 <Label>Instrucciones post-reserva</Label>
                 <Textarea value={postBookingInstructions} onChange={e => setPostBookingInstructions(e.target.value)} rows={3} placeholder="Llega 5 minutos antes..." />
+              </div>
+              <div className="space-y-2">
+                <Label>Tiempo mínimo de cancelación (horas)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={minCancellationHours}
+                  onChange={e => setMinCancellationHours(Number(e.target.value))}
+                  className="w-32"
+                />
+                <p className="text-xs text-muted-foreground">El cliente no podrá cancelar si faltan menos de estas horas. (0 = sin límite)</p>
               </div>
             </CardContent>
           </Card>

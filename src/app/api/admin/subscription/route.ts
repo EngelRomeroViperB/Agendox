@@ -28,16 +28,18 @@ export async function GET() {
     .limit(1)
     .single()
 
-  // Get usage counts
-  const [staffRes, servicesRes, appointmentsRes] = await Promise.all([
+  // Get usage counts + available plans
+  const [staffRes, servicesRes, appointmentsRes, plansRes] = await Promise.all([
     admin.from('staff').select('id', { count: 'exact', head: true }).eq('business_id', bu.business_id).eq('is_active', true),
     admin.from('services').select('id', { count: 'exact', head: true }).eq('business_id', bu.business_id).eq('is_active', true),
     admin.from('appointments').select('id', { count: 'exact', head: true }).eq('business_id', bu.business_id)
       .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
+    admin.from('subscription_plans').select('*').eq('is_active', true).order('price_monthly', { ascending: true }),
   ])
 
   return NextResponse.json({
     subscription,
+    plans: plansRes.data || [],
     usage: {
       staff: staffRes.count || 0,
       services: servicesRes.count || 0,

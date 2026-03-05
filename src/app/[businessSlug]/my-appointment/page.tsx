@@ -106,7 +106,8 @@ export default function MyAppointment() {
         toast.success('Cita cancelada exitosamente')
         setAppointment({ ...appointment, status: 'cancelled' })
       } else {
-        toast.error('Error al cancelar la cita')
+        const data = await res.json().catch(() => ({}))
+        toast.error(data.error || 'Error al cancelar la cita')
       }
     } catch {
       toast.error('Error al cancelar la cita')
@@ -283,7 +284,7 @@ export default function MyAppointment() {
                   <Separator />
                   <div className="flex items-start gap-2 text-xs text-muted-foreground bg-destructive/5 rounded-lg p-3">
                     <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-                    <span>La cancelación es inmediata y no se puede deshacer.</span>
+                    <span>La cancelación es inmediata y no se puede deshacer. Debe realizarse con al menos 24 horas de anticipación.</span>
                   </div>
                   <Button
                     variant="destructive"

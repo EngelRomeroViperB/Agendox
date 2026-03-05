@@ -26,6 +26,31 @@ export async function POST(request: Request) {
 
   const { data: appointment } = await lookupQuery.single()
 
+  if (!appointment) {
+    return NextResponse.json({ error: 'Cita no encontrada' }, { status: 404 })
+  }
+
+  // Verificar tiempo mínimo de cancelación
+  const bid = business_id || appointment.business_id
+  const { data: profileForCancel } = await supabase
+    .from('business_profiles')
+    .select('min_cancellation_hours')
+    .eq('business_id', bid)
+    .single()
+
+  const minHours = (profileForCancel as any)?.min_cancellation_hours ?? 24
+  if (minHours > 0) {
+    const scheduledDate = new Date(appointment.scheduled_at)
+    const now = new Date()
+    const hoursUntil = (scheduledDate.getTime() - now.getTime()) / (1000 * 60 * 60)
+    if (hoursUntil < minHours) {
+      return NextResponse.json(
+        { error: `No puedes cancelar con menos de ${minHours} horas de anticipación` },
+        { status: 400 }
+      )
+    }
+  }
+
   // Perform cancellation
   let query = supabase
     .from('appointments')

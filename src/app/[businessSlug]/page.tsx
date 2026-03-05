@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Clock, DollarSign, MapPin, Phone, Mail, Instagram, MessageCircle, CalendarCheck, Star, ArrowRight } from 'lucide-react'
+import { FadeIn } from '@/components/ui/fade-in'
 
 export default function BusinessLanding() {
   const { business, theme, profile, staff, services } = useBusiness()
@@ -85,7 +86,7 @@ export default function BusinessLanding() {
       <div className="max-w-5xl mx-auto px-4 py-12 space-y-16">
         {/* Servicios */}
         {services.length > 0 && (
-          <section>
+          <FadeIn><section>
             <div className="text-center mb-8">
               <h2 className="text-2xl md:text-3xl font-bold" style={{ color: 'var(--color-primary)' }}>
                 Nuestros Servicios
@@ -133,12 +134,12 @@ export default function BusinessLanding() {
                 </Button>
               </Link>
             </div>
-          </section>
+          </section></FadeIn>
         )}
 
         {/* Staff */}
         {staff.length > 0 && (
-          <section>
+          <FadeIn delay={100}><section>
             <div className="text-center mb-8">
               <h2 className="text-2xl md:text-3xl font-bold" style={{ color: 'var(--color-primary)' }}>
                 Nuestro Equipo
@@ -177,12 +178,12 @@ export default function BusinessLanding() {
                 </Card>
               ))}
             </div>
-          </section>
+          </section></FadeIn>
         )}
 
         {/* Galería */}
         {profile.gallery_urls && profile.gallery_urls.length > 0 && (
-          <section>
+          <FadeIn delay={150}><section>
             <div className="text-center mb-8">
               <h2 className="text-2xl md:text-3xl font-bold" style={{ color: 'var(--color-primary)' }}>
                 Galería
@@ -195,11 +196,11 @@ export default function BusinessLanding() {
                 </div>
               ))}
             </div>
-          </section>
+          </section></FadeIn>
         )}
 
         {/* Horario + Contacto */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <FadeIn delay={200}><section className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {workingHours && Object.keys(workingHours).length > 0 && (
             <Card className="border-0 shadow-sm">
               <CardContent className="p-6">
@@ -270,10 +271,10 @@ export default function BusinessLanding() {
               </div>
             </CardContent>
           </Card>
-        </section>
+        </section></FadeIn>
 
         {/* Footer CTA */}
-        <div className="text-center pb-8">
+        <FadeIn delay={250}><div className="text-center pb-8">
           <div className="rounded-2xl p-8" style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-secondary)' }}>
             <h3 className="text-2xl font-bold mb-2">¿Listo para tu cita?</h3>
             <p className="opacity-80 mb-5">Reserva en menos de 2 minutos</p>
@@ -288,7 +289,7 @@ export default function BusinessLanding() {
               </Button>
             </Link>
           </div>
-        </div>
+        </div></FadeIn>
 
         {/* Powered by */}
         <div className="text-center pb-4">
