@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
-import { CheckCircle, XCircle, Clock, Phone } from 'lucide-react'
-import { format } from 'date-fns'
+import { CheckCircle, XCircle, Clock, Phone, CalendarDays } from 'lucide-react'
+import { format, startOfMonth, endOfMonth, isSameDay } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { MiniCalendar } from '@/components/ui/mini-calendar'
 
 interface Appointment {
   id: string
@@ -44,11 +45,18 @@ export default function AdminAppointments() {
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState('all')
   const [search, setSearch] = useState('')
+  const [selectedDate, setSelectedDate] = useState(new Date())
+  const [filterByDate, setFilterByDate] = useState(false)
 
   const fetchAppointments = useCallback(() => {
     setLoading(true)
     const params = new URLSearchParams()
     if (statusFilter !== 'all') params.set('status', statusFilter)
+    // Always fetch the full month for calendar dots
+    const from = startOfMonth(selectedDate).toISOString()
+    const to = endOfMonth(selectedDate).toISOString()
+    params.set('from', from)
+    params.set('to', to)
 
     fetch(`/api/admin/appointments?${params.toString()}`)
       .then((r) => r.json())
@@ -57,9 +65,18 @@ export default function AdminAppointments() {
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [statusFilter])
+  }, [statusFilter, selectedDate])
 
   useEffect(() => { fetchAppointments() }, [fetchAppointments])
+
+  const appointmentCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    appointments.forEach(a => {
+      const key = format(new Date(a.scheduled_at), 'yyyy-MM-dd')
+      counts[key] = (counts[key] || 0) + 1
+    })
+    return counts
+  }, [appointments])
 
   const updateStatus = async (appointmentId: string, newStatus: string) => {
     const res = await fetch('/api/admin/appointments', {
@@ -76,6 +93,9 @@ export default function AdminAppointments() {
   }
 
   const filtered = appointments.filter((apt) => {
+    // Date filter
+    if (filterByDate && !isSameDay(new Date(apt.scheduled_at), selectedDate)) return false
+    // Search filter
     if (!search) return true
     const q = search.toLowerCase()
     return (
@@ -84,12 +104,40 @@ export default function AdminAppointments() {
       apt.client_email.toLowerCase().includes(q) ||
       apt.confirmation_code.toLowerCase().includes(q)
     )
-  })
+  }).sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime())
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Gestión de Citas</h1>
 
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Calendar sidebar */}
+        <Card className="lg:col-span-1">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Calendario</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MiniCalendar
+              selectedDate={selectedDate}
+              onSelectDate={(date) => { setSelectedDate(date); setFilterByDate(true) }}
+              appointmentCounts={appointmentCounts}
+            />
+            <div className="mt-3 space-y-2">
+              <Button
+                variant={filterByDate ? 'default' : 'outline'}
+                size="sm"
+                className="w-full text-xs"
+                onClick={() => setFilterByDate(!filterByDate)}
+              >
+                <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
+                {filterByDate ? `Filtrando: ${format(selectedDate, 'd MMM', { locale: es })}` : 'Mostrando todo el mes'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Appointments list */}
+        <div className="lg:col-span-3 space-y-4">
       {/* Filtros */}
       <div className="flex gap-3 flex-wrap">
         <Input
@@ -199,6 +247,8 @@ export default function AdminAppointments() {
           )}
         </CardContent>
       </Card>
+        </div>
+      </div>
     </div>
   )
 }
