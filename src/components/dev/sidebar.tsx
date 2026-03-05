@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Building2,
   PlusCircle,
+  CreditCard,
   LogOut,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -16,6 +17,7 @@ const navItems = [
   { href: '/dev', label: 'Dashboard Global', icon: LayoutDashboard },
   { href: '/dev/businesses', label: 'Negocios', icon: Building2 },
   { href: '/dev/businesses/new', label: 'Nuevo Negocio', icon: PlusCircle },
+  { href: '/dev/subscriptions', label: 'Suscripciones', icon: CreditCard },
 ]
 
 export function DevSidebar() {
