@@ -22,13 +22,18 @@ export default async function BusinessLayout({
 
   if (!business) return notFound()
 
-  // Cargar theme, profile, staff y services en paralelo
+  // Cargar theme, profile, staff, services y staff_services en paralelo
   const [themeRes, profileRes, staffRes, servicesRes] = await Promise.all([
     supabase.from('business_themes').select('*').eq('business_id', business.id).single(),
     supabase.from('business_profiles').select('*').eq('business_id', business.id).single(),
     supabase.from('staff').select('*').eq('business_id', business.id).eq('is_active', true),
     supabase.from('services').select('*').eq('business_id', business.id).eq('is_active', true),
   ])
+
+  const staffIds = (staffRes.data || []).map((s: { id: string }) => s.id)
+  const staffServicesRes = staffIds.length > 0
+    ? await supabase.from('staff_services').select('staff_id, service_id').in('staff_id', staffIds)
+    : { data: [] }
 
   const theme = themeRes.data || {
     id: '', business_id: business.id,
@@ -48,6 +53,7 @@ export default async function BusinessLayout({
     profile,
     staff: staffRes.data || [],
     services: servicesRes.data || [],
+    staffServices: staffServicesRes.data || [],
   }
 
   return (

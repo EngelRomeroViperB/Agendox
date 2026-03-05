@@ -3,12 +3,18 @@
 import { createContext, useContext } from 'react'
 import type { Business, BusinessTheme, BusinessProfile, Staff, Service } from '@/lib/types'
 
+export interface StaffServiceLink {
+  staff_id: string
+  service_id: string
+}
+
 export interface BusinessContextType {
   business: Business
   theme: BusinessTheme
   profile: BusinessProfile
   staff: Staff[]
   services: Service[]
+  staffServices: StaffServiceLink[]
 }
 
 const BusinessContext = createContext<BusinessContextType | null>(null)

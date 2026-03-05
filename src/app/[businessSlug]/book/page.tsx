@@ -17,7 +17,7 @@ import { es } from 'date-fns/locale'
 import type { Service, Staff } from '@/lib/types'
 
 export default function BookAppointment() {
-  const { business, profile, staff, services } = useBusiness()
+  const { business, profile, staff, services, staffServices } = useBusiness()
   const router = useRouter()
 
   const [step, setStep] = useState(1)
@@ -34,8 +34,9 @@ export default function BookAppointment() {
   const [submitting, setSubmitting] = useState(false)
 
   // Filtrar staff que ofrece el servicio seleccionado
-  // Por ahora mostramos todo el staff activo; la relación staff_services se vinculará después
-  const availableStaff = staff
+  const availableStaff = selectedService && staffServices.length > 0
+    ? staff.filter(s => staffServices.some(ss => ss.staff_id === s.id && ss.service_id === selectedService.id))
+    : staff
 
   const workingHours = profile.working_hours as Record<string, {
     is_open: boolean; open_time: string; close_time: string
@@ -209,12 +210,16 @@ export default function BookAppointment() {
                   onClick={() => { setSelectedStaff(member); setNoPreference(false) }}
                 >
                   <CardContent className="p-4 flex items-center gap-3">
-                    <div
-                      className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold text-white"
-                      style={{ backgroundColor: 'var(--color-primary)' }}
-                    >
-                      {member.name.charAt(0).toUpperCase()}
-                    </div>
+                    {member.photo_url ? (
+                      <img src={member.photo_url} alt={member.name} className="w-12 h-12 rounded-full object-cover" />
+                    ) : (
+                      <div
+                        className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold text-white"
+                        style={{ backgroundColor: 'var(--color-primary)' }}
+                      >
+                        {member.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     <div>
                       <h3 className="font-semibold">{member.name}</h3>
                       {member.role && <p className="text-sm text-muted-foreground">{member.role}</p>}

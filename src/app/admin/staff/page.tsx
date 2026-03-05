@@ -12,7 +12,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from 'sonner'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { ImageUpload } from '@/components/ui/image-upload'
+import { Checkbox } from '@/components/ui/checkbox'
 import { useAuth } from '@/lib/hooks/use-auth'
+
+interface ServiceOption {
+  id: string
+  name: string
+}
+
+interface StaffServiceLink {
+  staff_id: string
+  service_id: string
+}
 
 interface StaffMember {
   id: string
@@ -33,6 +44,9 @@ export default function AdminStaff() {
   const [role, setRole] = useState('')
   const [bio, setBio] = useState('')
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+  const [allServices, setAllServices] = useState<ServiceOption[]>([])
+  const [staffServices, setStaffServices] = useState<StaffServiceLink[]>([])
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([])
 
   const fetchStaff = useCallback(() => {
     setLoading(true)
@@ -42,15 +56,34 @@ export default function AdminStaff() {
       .catch(() => setLoading(false))
   }, [])
 
-  useEffect(() => { fetchStaff() }, [fetchStaff])
+  const fetchServices = useCallback(() => {
+    fetch('/api/admin/services')
+      .then(r => r.json())
+      .then(data => setAllServices(Array.isArray(data) ? data : []))
+  }, [])
 
-  const resetForm = () => { setName(''); setRole(''); setBio(''); setPhotoUrl(null); setEditingId(null) }
+  const fetchStaffServices = useCallback(() => {
+    fetch('/api/admin/staff-services')
+      .then(r => r.json())
+      .then(data => setStaffServices(Array.isArray(data) ? data : []))
+  }, [])
+
+  useEffect(() => { fetchStaff(); fetchServices(); fetchStaffServices() }, [fetchStaff, fetchServices, fetchStaffServices])
+
+  const resetForm = () => { setName(''); setRole(''); setBio(''); setPhotoUrl(null); setSelectedServiceIds([]); setEditingId(null) }
 
   const openCreate = () => { resetForm(); setDialogOpen(true) }
 
   const openEdit = (member: StaffMember) => {
     setEditingId(member.id); setName(member.name); setRole(member.role); setBio(member.bio || ''); setPhotoUrl(member.photo_url)
+    setSelectedServiceIds(staffServices.filter(ss => ss.staff_id === member.id).map(ss => ss.service_id))
     setDialogOpen(true)
+  }
+
+  const toggleServiceId = (serviceId: string) => {
+    setSelectedServiceIds(prev =>
+      prev.includes(serviceId) ? prev.filter(id => id !== serviceId) : [...prev, serviceId]
+    )
   }
 
   const handleSave = async () => {
@@ -62,16 +95,37 @@ export default function AdminStaff() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: editingId, name, role, bio, photo_url: photoUrl }),
       })
-      if (res.ok) { toast.success('Profesional actualizado'); fetchStaff() }
-      else toast.error('Error al actualizar')
+      if (res.ok) {
+        // Guardar servicios asignados
+        if (selectedServiceIds.length > 0) {
+          await fetch('/api/admin/staff-services', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ staff_id: editingId, service_ids: selectedServiceIds }),
+          })
+        } else {
+          await fetch(`/api/admin/staff-services?staff_id=${editingId}`, { method: 'DELETE' })
+        }
+        toast.success('Profesional actualizado'); fetchStaff(); fetchStaffServices()
+      } else toast.error('Error al actualizar')
     } else {
       const res = await fetch('/api/admin/staff', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, role, bio, photo_url: photoUrl }),
       })
-      if (res.ok) { toast.success('Profesional creado'); fetchStaff() }
-      else toast.error('Error al crear')
+      if (res.ok) {
+        const created = await res.json()
+        // Guardar servicios asignados al nuevo staff
+        if (selectedServiceIds.length > 0 && created?.id) {
+          await fetch('/api/admin/staff-services', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ staff_id: created.id, service_ids: selectedServiceIds }),
+          })
+        }
+        toast.success('Profesional creado'); fetchStaff(); fetchStaffServices()
+      } else toast.error('Error al crear')
     }
     setDialogOpen(false); resetForm()
   }
@@ -129,6 +183,22 @@ export default function AdminStaff() {
                   placeholder="Subir foto"
                 />
               </div>
+              {allServices.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Servicios que ofrece</Label>
+                  <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border rounded-md p-3">
+                    {allServices.map(svc => (
+                      <label key={svc.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                        <Checkbox
+                          checked={selectedServiceIds.includes(svc.id)}
+                          onCheckedChange={() => toggleServiceId(svc.id)}
+                        />
+                        {svc.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
               <Button className="w-full" onClick={handleSave}>Guardar</Button>
             </div>
           </DialogContent>
@@ -148,6 +218,7 @@ export default function AdminStaff() {
                 <TableRow>
                   <TableHead>Nombre</TableHead>
                   <TableHead>Cargo</TableHead>
+                  <TableHead>Servicios</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Activo</TableHead>
                   <TableHead>Acciones</TableHead>
@@ -169,6 +240,18 @@ export default function AdminStaff() {
                       </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">{m.role || '—'}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {staffServices
+                          .filter(ss => ss.staff_id === m.id)
+                          .map(ss => {
+                            const svc = allServices.find(s => s.id === ss.service_id)
+                            return svc ? (
+                              <Badge key={ss.service_id} variant="outline" className="text-xs">{svc.name}</Badge>
+                            ) : null
+                          })}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <Badge variant={m.is_active ? 'default' : 'secondary'}>
                         {m.is_active ? 'Activo' : 'Inactivo'}
