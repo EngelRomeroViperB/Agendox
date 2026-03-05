@@ -7,7 +7,7 @@ import { useBusiness } from '@/lib/context/business-context'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { CheckCircle, Copy, Calendar, ArrowLeft, Clock, User, Share2, MessageCircle } from 'lucide-react'
+import { CheckCircle, Copy, Calendar, ArrowLeft, Clock, User, Share2, MessageCircle, CalendarPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -58,6 +58,21 @@ export default function Confirmation() {
     const timeStr = format(new Date(appointment.scheduled_at), 'HH:mm')
     const msg = `¡Reservé una cita en ${business.name}!\n📅 ${dateStr} a las ${timeStr}\n✂️ ${appointment.services?.name || ''}\nCódigo: ${code}`
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
+  }
+
+  const addToGoogleCalendar = () => {
+    if (!appointment) return
+    const start = new Date(appointment.scheduled_at)
+    const end = new Date(start.getTime() + (appointment.services?.duration_minutes || 30) * 60000)
+    const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: `${appointment.services?.name || 'Cita'} — ${business.name}`,
+      dates: `${fmt(start)}/${fmt(end)}`,
+      details: `Profesional: ${appointment.staff?.name || ''}\nCódigo: ${code}`,
+      location: profile.address || '',
+    })
+    window.open(`https://calendar.google.com/calendar/render?${params.toString()}`, '_blank')
   }
 
   if (loading) {
@@ -172,7 +187,13 @@ export default function Confirmation() {
 
         {/* Actions */}
         <div className="flex flex-col gap-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
+            <Button variant="outline" onClick={addToGoogleCalendar} className="h-auto py-3">
+              <div className="flex flex-col items-center gap-1">
+                <CalendarPlus className="h-5 w-5" />
+                <span className="text-xs">Calendario</span>
+              </div>
+            </Button>
             <Button variant="outline" onClick={shareViaWhatsApp} className="h-auto py-3">
               <div className="flex flex-col items-center gap-1">
                 <MessageCircle className="h-5 w-5" />

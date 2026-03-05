@@ -4,6 +4,10 @@ import {
   bookingConfirmationSubject,
   cancellationHtml,
   cancellationSubject,
+  adminNewBookingHtml,
+  adminNewBookingSubject,
+  reminderHtml,
+  reminderSubject,
 } from './templates'
 
 interface AppointmentNotificationData {
@@ -38,6 +42,47 @@ export async function sendBookingConfirmation(data: AppointmentNotificationData)
     return result
   } catch (err) {
     console.error('[Email] Failed to send booking confirmation:', err)
+    return null
+  }
+}
+
+export async function sendAdminNewBookingNotification(data: AppointmentNotificationData & { adminEmail: string }) {
+  const resend = getResend()
+  if (!resend || !data.adminEmail) {
+    console.log('[Email] Resend not configured or no admin email, skipping admin notification')
+    return null
+  }
+
+  try {
+    const result = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: data.adminEmail,
+      subject: adminNewBookingSubject(data.clientName),
+      html: adminNewBookingHtml(data),
+    })
+    console.log('[Email] Admin notification sent to', data.adminEmail)
+    return result
+  } catch (err) {
+    console.error('[Email] Failed to send admin notification:', err)
+    return null
+  }
+}
+
+export async function sendReminder(data: AppointmentNotificationData) {
+  const resend = getResend()
+  if (!resend) return null
+
+  try {
+    const result = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: data.clientEmail,
+      subject: reminderSubject(data.businessName),
+      html: reminderHtml(data),
+    })
+    console.log('[Email] Reminder sent to', data.clientEmail)
+    return result
+  } catch (err) {
+    console.error('[Email] Failed to send reminder:', err)
     return null
   }
 }

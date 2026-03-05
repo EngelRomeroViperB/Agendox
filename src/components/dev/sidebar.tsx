@@ -8,6 +8,7 @@ import {
   Building2,
   PlusCircle,
   CreditCard,
+  BarChart3,
   LogOut,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -18,6 +19,7 @@ const navItems = [
   { href: '/dev/businesses', label: 'Negocios', icon: Building2 },
   { href: '/dev/businesses/new', label: 'Nuevo Negocio', icon: PlusCircle },
   { href: '/dev/subscriptions', label: 'Suscripciones', icon: CreditCard },
+  { href: '/dev/reports', label: 'Reportes', icon: BarChart3 },
 ]
 
 export function DevSidebar() {

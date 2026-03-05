@@ -8,10 +8,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
-import { CheckCircle, XCircle, Clock, Phone, CalendarDays } from 'lucide-react'
+import { CheckCircle, XCircle, Clock, Phone, CalendarDays, List, LayoutGrid } from 'lucide-react'
 import { format, startOfMonth, endOfMonth, isSameDay } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { MiniCalendar } from '@/components/ui/mini-calendar'
+import { AppointmentCalendar } from '@/components/ui/appointment-calendar'
 
 interface Appointment {
   id: string
@@ -24,6 +25,7 @@ interface Appointment {
   notes: string | null
   staff: { name: string } | null
   services: { name: string; duration_minutes: number; price: number } | null
+  staff_id?: string
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -42,26 +44,30 @@ const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive' | 
 
 export default function AdminAppointments() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [staffList, setStaffList] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [filterByDate, setFilterByDate] = useState(false)
+  const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
 
   const fetchAppointments = useCallback(() => {
     setLoading(true)
     const params = new URLSearchParams()
     if (statusFilter !== 'all') params.set('status', statusFilter)
-    // Always fetch the full month for calendar dots
     const from = startOfMonth(selectedDate).toISOString()
     const to = endOfMonth(selectedDate).toISOString()
     params.set('from', from)
     params.set('to', to)
 
-    fetch(`/api/admin/appointments?${params.toString()}`)
-      .then((r) => r.json())
-      .then((data) => {
+    Promise.all([
+      fetch(`/api/admin/appointments?${params.toString()}`).then(r => r.json()),
+      fetch('/api/admin/staff').then(r => r.json()),
+    ])
+      .then(([data, staff]) => {
         setAppointments(data.appointments || [])
+        setStaffList(Array.isArray(staff) ? staff.map((s: any) => ({ id: s.id, name: s.name })) : [])
         setLoading(false)
       })
       .catch(() => setLoading(false))
@@ -108,8 +114,34 @@ export default function AdminAppointments() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Gestión de Citas</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Gestión de Citas</h1>
+        <div className="flex border rounded-lg p-0.5">
+          <Button
+            variant={viewMode === 'table' ? 'default' : 'ghost'}
+            size="sm"
+            className="h-8 gap-1.5"
+            onClick={() => setViewMode('table')}
+          >
+            <List className="h-4 w-4" /> Tabla
+          </Button>
+          <Button
+            variant={viewMode === 'calendar' ? 'default' : 'ghost'}
+            size="sm"
+            className="h-8 gap-1.5"
+            onClick={() => setViewMode('calendar')}
+          >
+            <LayoutGrid className="h-4 w-4" /> Calendario
+          </Button>
+        </div>
+      </div>
 
+      {viewMode === 'calendar' ? (
+        <AppointmentCalendar
+          appointments={appointments}
+          staffList={staffList}
+        />
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Calendar sidebar */}
         <Card className="lg:col-span-1">
@@ -249,6 +281,7 @@ export default function AdminAppointments() {
       </Card>
         </div>
       </div>
+      )}
     </div>
   )
 }

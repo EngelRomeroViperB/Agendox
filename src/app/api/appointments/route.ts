@@ -1,6 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { sendBookingConfirmation } from '@/lib/email/send'
+import { sendBookingConfirmation, sendAdminNewBookingNotification } from '@/lib/email/send'
 
 function generateConfirmationCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -57,15 +57,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 400 })
   }
 
-  // Send email notification (non-blocking)
+  // Send email notifications (non-blocking)
   try {
-    const [bizRes, svcRes, staffRes] = await Promise.all([
+    const [bizRes, svcRes, staffRes, profileRes] = await Promise.all([
       supabase.from('businesses').select('name, slug').eq('id', business_id).single(),
       supabase.from('services').select('name, price, duration_minutes').eq('id', service_id).single(),
       supabase.from('staff').select('name').eq('id', staff_id).single(),
+      supabase.from('business_profiles').select('email, notification_email, notification_settings').eq('business_id', business_id).single(),
     ])
 
-    sendBookingConfirmation({
+    const profile = profileRes.data as any
+    const settings = profile?.notification_settings || { booking_confirmation: true, admin_new_booking: true }
+
+    const emailData = {
       businessName: bizRes.data?.name || '',
       businessSlug: bizRes.data?.slug || '',
       clientName: client_name,
@@ -76,7 +80,20 @@ export async function POST(request: Request) {
       confirmationCode: confirmation_code,
       price: Number(svcRes.data?.price) || 0,
       duration: svcRes.data?.duration_minutes || 0,
-    }).catch(() => {})
+    }
+
+    // Confirmación al cliente (si está activada)
+    if (settings.booking_confirmation !== false) {
+      sendBookingConfirmation(emailData).catch(() => {})
+    }
+
+    // Notificación al admin (si está activada)
+    if (settings.admin_new_booking !== false) {
+      const adminEmail = profile?.notification_email || profile?.email
+      if (adminEmail) {
+        sendAdminNewBookingNotification({ ...emailData, adminEmail }).catch(() => {})
+      }
+    }
   } catch {
     // Email sending should not block the response
   }

@@ -8,8 +8,9 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { PlusCircle, Pencil, Eye, Power } from 'lucide-react'
+import { PlusCircle, Pencil, Eye, Power, UserCog } from 'lucide-react'
 import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 interface Business {
   id: string
@@ -32,6 +33,7 @@ const BUSINESS_TYPES = [
 ]
 
 export default function DevBusinesses() {
+  const router = useRouter()
   const [businesses, setBusinesses] = useState<Business[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -168,6 +170,24 @@ export default function DevBusinesses() {
                             <Eye className="h-4 w-4" />
                           </Button>
                         </Link>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Ver como admin"
+                          onClick={async () => {
+                            const res = await fetch('/api/dev/impersonate', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ business_id: biz.id }),
+                            })
+                            if (res.ok) {
+                              toast.success(`Impersonando: ${biz.name}`)
+                              router.push('/admin/dashboard')
+                            } else toast.error('Error')
+                          }}
+                        >
+                          <UserCog className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"

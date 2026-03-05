@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { Search, XCircle, ArrowLeft, Loader2, Clock, User, Calendar, AlertTriangle } from 'lucide-react'
+import { Search, XCircle, ArrowLeft, Loader2, Clock, User, Calendar, AlertTriangle, Mail, Hash } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -42,34 +42,47 @@ const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive' | 
 
 export default function MyAppointment() {
   const { business } = useBusiness()
+  const [searchMode, setSearchMode] = useState<'code' | 'email'>('code')
   const [code, setCode] = useState('')
+  const [email, setEmail] = useState('')
   const [appointment, setAppointment] = useState<AppointmentData | null>(null)
+  const [appointments, setAppointments] = useState<AppointmentData[]>([])
   const [loading, setLoading] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [searched, setSearched] = useState(false)
 
   const handleSearch = async () => {
-    if (!code.trim()) {
-      toast.error('Ingresa un código de reserva')
-      return
+    if (searchMode === 'code' && !code.trim()) {
+      toast.error('Ingresa un código de reserva'); return
+    }
+    if (searchMode === 'email' && !email.trim()) {
+      toast.error('Ingresa tu email'); return
     }
 
     setLoading(true)
     setSearched(true)
+    setAppointment(null)
+    setAppointments([])
 
     try {
-      const res = await fetch(`/api/appointments/lookup?code=${code.trim()}&business_id=${business.id}`)
+      const param = searchMode === 'code'
+        ? `code=${code.trim()}`
+        : `email=${encodeURIComponent(email.trim())}`
+      const res = await fetch(`/api/appointments/lookup?${param}&business_id=${business.id}`)
       const data = await res.json()
 
-      if (res.ok && data && !data.error) {
-        setAppointment(data)
+      if (res.ok && !data.error) {
+        if (data.appointments) {
+          setAppointments(data.appointments)
+          if (data.appointments.length === 1) setAppointment(data.appointments[0])
+        } else {
+          setAppointment(data)
+        }
       } else {
-        setAppointment(null)
-        toast.error('No se encontró una cita con ese código')
+        toast.error(searchMode === 'code' ? 'No se encontró una cita con ese código' : 'No se encontraron citas con ese email')
       }
     } catch {
-      setAppointment(null)
-      toast.error('Error al buscar la cita')
+      toast.error('Error al buscar')
     } finally {
       setLoading(false)
     }
@@ -118,18 +131,44 @@ export default function MyAppointment() {
         {/* Buscador */}
         <Card className="mb-8">
           <CardContent className="p-6">
-            <h2 className="text-lg font-bold mb-4">Ingresa tu código de reserva</h2>
+            <h2 className="text-lg font-bold mb-3">Buscar mi cita</h2>
+            <div className="flex gap-1 mb-4">
+              <Button
+                variant={searchMode === 'code' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => { setSearchMode('code'); setSearched(false); setAppointment(null); setAppointments([]) }}
+                className="flex-1"
+              >
+                <Hash className="h-3.5 w-3.5 mr-1.5" /> Código
+              </Button>
+              <Button
+                variant={searchMode === 'email' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => { setSearchMode('email'); setSearched(false); setAppointment(null); setAppointments([]) }}
+                className="flex-1"
+              >
+                <Mail className="h-3.5 w-3.5 mr-1.5" /> Email
+              </Button>
+            </div>
             <div className="flex gap-2">
               <div className="flex-1">
-                <Label htmlFor="code" className="sr-only">Código</Label>
-                <Input
-                  id="code"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.toUpperCase())}
-                  placeholder="Ej: ABC12345"
-                  className="font-mono text-lg tracking-wider"
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                />
+                {searchMode === 'code' ? (
+                  <Input
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.toUpperCase())}
+                    placeholder="Ej: ABC12345"
+                    className="font-mono text-lg tracking-wider"
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  />
+                ) : (
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="tu@email.com"
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  />
+                )}
               </div>
               <Button
                 onClick={handleSearch}
@@ -142,15 +181,45 @@ export default function MyAppointment() {
           </CardContent>
         </Card>
 
-        {/* Resultado */}
-        {searched && !loading && !appointment && (
+        {/* Email results: list of appointments */}
+        {searched && !loading && appointments.length > 1 && !appointment && (
+          <Card className="mb-6 border-0 shadow-sm">
+            <CardContent className="p-5">
+              <h3 className="font-semibold text-base mb-3">Tus citas ({appointments.length})</h3>
+              <div className="space-y-2">
+                {appointments.map(appt => (
+                  <button
+                    key={appt.id}
+                    className="w-full text-left border rounded-lg p-3 hover:bg-muted/50 transition-colors"
+                    onClick={() => setAppointment(appt)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="font-medium text-sm">{appt.services?.name || 'Cita'}</span>
+                        <span className="text-xs text-muted-foreground ml-2">
+                          {format(new Date(appt.scheduled_at), "d MMM yyyy, HH:mm", { locale: es })}
+                        </span>
+                      </div>
+                      <Badge variant={STATUS_VARIANTS[appt.status] || 'outline'} className="text-xs">
+                        {STATUS_LABELS[appt.status] || appt.status}
+                      </Badge>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* No results */}
+        {searched && !loading && !appointment && appointments.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-muted-foreground">No se encontró ninguna cita con ese código</p>
+            <p className="text-muted-foreground">No se encontraron citas</p>
           </div>
         )}
 
         {appointment && (
-          <Card className="border-0 shadow-sm">
+          <Card className="border-0 shadow-sm mb-6">
             <CardContent className="p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-base">Detalles de tu cita</h3>

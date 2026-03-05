@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, UserCheck } from 'lucide-react'
 import { ImageUpload } from '@/components/ui/image-upload'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useAuth } from '@/lib/hooks/use-auth'
@@ -47,6 +47,18 @@ export default function AdminStaff() {
   const [allServices, setAllServices] = useState<ServiceOption[]>([])
   const [staffServices, setStaffServices] = useState<StaffServiceLink[]>([])
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([])
+  const [linkedStaffIds, setLinkedStaffIds] = useState<Set<string>>(new Set())
+
+  const fetchEmployees = useCallback(() => {
+    fetch('/api/admin/employees')
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setLinkedStaffIds(new Set(data.filter((e: any) => e.staff_id).map((e: any) => e.staff_id)))
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const fetchStaff = useCallback(() => {
     setLoading(true)
@@ -68,7 +80,7 @@ export default function AdminStaff() {
       .then(data => setStaffServices(Array.isArray(data) ? data : []))
   }, [])
 
-  useEffect(() => { fetchStaff(); fetchServices(); fetchStaffServices() }, [fetchStaff, fetchServices, fetchStaffServices])
+  useEffect(() => { fetchStaff(); fetchServices(); fetchStaffServices(); fetchEmployees() }, [fetchStaff, fetchServices, fetchStaffServices, fetchEmployees])
 
   const resetForm = () => { setName(''); setRole(''); setBio(''); setPhotoUrl(null); setSelectedServiceIds([]); setEditingId(null) }
 
@@ -253,9 +265,20 @@ export default function AdminStaff() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={m.is_active ? 'default' : 'secondary'}>
-                        {m.is_active ? 'Activo' : 'Inactivo'}
-                      </Badge>
+                      <div className="flex flex-col gap-1">
+                        <Badge variant={m.is_active ? 'default' : 'secondary'}>
+                          {m.is_active ? 'Activo' : 'Inactivo'}
+                        </Badge>
+                        {linkedStaffIds.has(m.id) ? (
+                          <Badge variant="outline" className="text-[10px] gap-0.5 text-green-600 border-green-300">
+                            <UserCheck className="h-2.5 w-2.5" /> Con cuenta
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                            Sin cuenta
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Switch checked={m.is_active} onCheckedChange={() => toggleActive(m.id, m.is_active)} />

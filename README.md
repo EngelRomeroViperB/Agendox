@@ -32,10 +32,11 @@ src/
 │   │   └── settings/      # Configuración
 │   ├── dev/               # Panel de superadmin
 │   │   ├── businesses/    # CRUD de negocios
-│   │   └── subscriptions/ # Gestión de suscripciones
+│   │   ├── subscriptions/ # Gestión de suscripciones
+│   │   └── reports/       # Reportes globales
 │   └── api/               # API Routes
 ├── components/
-│   ├── ui/                # Componentes shadcn/ui + MiniCalendar
+│   ├── ui/                # Componentes shadcn/ui + MiniCalendar + AppointmentCalendar
 │   ├── admin/             # Sidebar admin
 │   └── dev/               # Sidebar dev + BusinessBuilder
 ├── lib/
@@ -45,7 +46,7 @@ src/
 │   ├── email/             # Resend templates y envío
 │   └── types/             # TypeScript interfaces
 └── supabase/
-    └── migrations/        # SQL migrations (001-005)
+    └── migrations/        # SQL migrations (001-006)
 ```
 
 ## Setup local
@@ -73,6 +74,7 @@ Ejecutar las migraciones en orden en el SQL Editor de Supabase:
 3. `supabase/migrations/003_staff_services.sql`
 4. `supabase/migrations/004_employee_staff_link.sql`
 5. `supabase/migrations/005_subscriptions.sql`
+6. `supabase/migrations/006_notifications.sql`
 
 ### 4. Crear usuario superadmin
 
@@ -97,6 +99,7 @@ npm run dev
 | `SUPABASE_SERVICE_ROLE_KEY` | Clave de servicio (server-side) | ✅ |
 | `RESEND_API_KEY` | API Key de Resend | Opcional |
 | `RESEND_FROM_EMAIL` | Email remitente (ej: `Agendox <noreply@tudominio.com>`) | Opcional |
+| `CRON_SECRET` | Secret para proteger el endpoint del cron de recordatorios | Opcional |
 
 ## Deploy en Vercel
 
@@ -106,9 +109,11 @@ npm run dev
 4. Build command: `npm run build`
 5. Deploy
 
+El archivo `vercel.json` incluye un cron job que ejecuta `/api/cron/reminders` cada 15 minutos para enviar recordatorios por email 1 hora antes de cada cita.
+
 ## Roles
 
-- **superadmin**: Acceso completo al panel `/dev`, gestión de todos los negocios
+- **superadmin**: Acceso completo al panel `/dev`, gestión de todos los negocios, impersonación de admin
 - **owner**: Propietario del negocio, acceso completo al panel `/admin`
 - **employee**: Empleado vinculado a un profesional, ve solo sus citas
 

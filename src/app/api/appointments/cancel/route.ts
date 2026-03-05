@@ -43,23 +43,36 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 400 })
   }
 
-  // Send cancellation email (non-blocking)
+  // Enviar email de cancelación (si está activado)
   if (appointment?.client_email) {
     const biz = appointment.businesses as any
     const svc = appointment.services as any
     const stf = appointment.staff as any
-    sendCancellationNotification({
-      businessName: biz?.name || '',
-      businessSlug: biz?.slug || '',
-      clientName: appointment.client_name,
-      clientEmail: appointment.client_email,
-      serviceName: svc?.name || '',
-      staffName: stf?.name || '',
-      scheduledAt: appointment.scheduled_at,
-      confirmationCode: confirmation_code,
-      price: Number(svc?.price) || 0,
-      duration: svc?.duration_minutes || 0,
-    }).catch(() => {})
+
+    // Consultar toggles de notificación del negocio
+    const bid = business_id || appointment.business_id
+    const { data: profileData } = await supabase
+      .from('business_profiles')
+      .select('notification_settings')
+      .eq('business_id', bid)
+      .single()
+
+    const settings = (profileData as any)?.notification_settings || { cancellation: true }
+
+    if (settings.cancellation !== false) {
+      sendCancellationNotification({
+        businessName: biz?.name || '',
+        businessSlug: biz?.slug || '',
+        clientName: appointment.client_name,
+        clientEmail: appointment.client_email,
+        serviceName: svc?.name || '',
+        staffName: stf?.name || '',
+        scheduledAt: appointment.scheduled_at,
+        confirmationCode: confirmation_code,
+        price: Number(svc?.price) || 0,
+        duration: svc?.duration_minutes || 0,
+      }).catch(() => {})
+    }
   }
 
   return NextResponse.json({ success: true })

@@ -11,6 +11,7 @@ interface AuthState {
   businessId: string | null
   staffId: string | null
   loading: boolean
+  impersonating?: { id: string; name: string; slug: string } | null
 }
 
 export function useAuth() {
@@ -20,6 +21,7 @@ export function useAuth() {
     businessId: null,
     staffId: null,
     loading: true,
+    impersonating: null,
   })
 
   const supabase = createClient()
@@ -37,7 +39,20 @@ export function useAuth() {
 
       // Verificar si es superadmin
       if (user.app_metadata?.role === 'superadmin') {
-        setAuthState({ user, role: 'superadmin', businessId: null, staffId: null, loading: false })
+        // Check impersonation
+        try {
+          const impRes = await fetch('/api/dev/impersonate')
+          const impData = await impRes.json()
+          if (impData.impersonating && impData.business) {
+            setAuthState({
+              user, role: 'owner', businessId: impData.business.id,
+              staffId: null, loading: false,
+              impersonating: impData.business,
+            })
+            return
+          }
+        } catch {}
+        setAuthState({ user, role: 'superadmin', businessId: null, staffId: null, loading: false, impersonating: null })
         return
       }
 
@@ -72,7 +87,19 @@ export function useAuth() {
       const user = session.user
 
       if (user.app_metadata?.role === 'superadmin') {
-        setAuthState({ user, role: 'superadmin', businessId: null, staffId: null, loading: false })
+        try {
+          const impRes = await fetch('/api/dev/impersonate')
+          const impData = await impRes.json()
+          if (impData.impersonating && impData.business) {
+            setAuthState({
+              user, role: 'owner', businessId: impData.business.id,
+              staffId: null, loading: false,
+              impersonating: impData.business,
+            })
+            return
+          }
+        } catch {}
+        setAuthState({ user, role: 'superadmin', businessId: null, staffId: null, loading: false, impersonating: null })
         return
       }
 
@@ -89,9 +116,10 @@ export function useAuth() {
           businessId: businessUser.business_id,
           staffId: businessUser.staff_id || null,
           loading: false,
+          impersonating: null,
         })
       } else {
-        setAuthState({ user, role: null, businessId: null, staffId: null, loading: false })
+        setAuthState({ user, role: null, businessId: null, staffId: null, loading: false, impersonating: null })
       }
     })
 
@@ -99,10 +127,22 @@ export function useAuth() {
   }, [])
 
   const signOut = async () => {
+    // Clear impersonation if active
+    if (authState.impersonating) {
+      await fetch('/api/dev/impersonate', { method: 'DELETE' })
+      setAuthState({ user: authState.user, role: 'superadmin', businessId: null, staffId: null, loading: false, impersonating: null })
+      window.location.href = '/dev'
+      return
+    }
     await supabase.auth.signOut()
-    setAuthState({ user: null, role: null, businessId: null, staffId: null, loading: false })
+    setAuthState({ user: null, role: null, businessId: null, staffId: null, loading: false, impersonating: null })
     window.location.href = '/admin/login'
   }
 
-  return { ...authState, signOut }
+  const stopImpersonating = async () => {
+    await fetch('/api/dev/impersonate', { method: 'DELETE' })
+    window.location.href = '/dev'
+  }
+
+  return { ...authState, signOut, stopImpersonating }
 }

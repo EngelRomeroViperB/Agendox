@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
-import { Save, Loader2 } from 'lucide-react'
+import { Save, Loader2, Bell } from 'lucide-react'
 
 const DAYS = [
   { key: 'lunes', label: 'Lunes' },
@@ -36,6 +36,13 @@ export default function AdminSettings() {
   const [facebook, setFacebook] = useState('')
   const [tiktok, setTiktok] = useState('')
   const [postBookingInstructions, setPostBookingInstructions] = useState('')
+  const [notificationEmail, setNotificationEmail] = useState('')
+  const [notifications, setNotifications] = useState({
+    booking_confirmation: true,
+    cancellation: true,
+    reminder: true,
+    admin_new_booking: true,
+  })
   const [workingHours, setWorkingHours] = useState<Record<string, {
     is_open: boolean; open_time: string; close_time: string
   }>>({})
@@ -50,6 +57,8 @@ export default function AdminSettings() {
         setPhone(p.phone || '')
         setEmail(p.email || '')
         setPostBookingInstructions(p.post_booking_instructions || '')
+        setNotificationEmail(p.notification_email || '')
+        if (p.notification_settings) setNotifications({ ...notifications, ...p.notification_settings })
         const sl = p.social_links || {}
         setInstagram(sl.instagram || '')
         setWhatsapp(sl.whatsapp || '')
@@ -78,6 +87,8 @@ export default function AdminSettings() {
           social_links: { instagram, whatsapp, facebook, tiktok },
           working_hours: workingHours,
           post_booking_instructions: postBookingInstructions,
+          notification_email: notificationEmail || null,
+          notification_settings: notifications,
         },
       }),
     })
@@ -103,6 +114,7 @@ export default function AdminSettings() {
           <TabsTrigger value="info">Información</TabsTrigger>
           <TabsTrigger value="horario">Horario</TabsTrigger>
           <TabsTrigger value="redes">Redes Sociales</TabsTrigger>
+          <TabsTrigger value="notificaciones">Notificaciones</TabsTrigger>
         </TabsList>
 
         <TabsContent value="info">
@@ -180,6 +192,71 @@ export default function AdminSettings() {
                 <div className="space-y-2"><Label>WhatsApp</Label><Input value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder="+57 300 123 4567" /></div>
                 <div className="space-y-2"><Label>Facebook</Label><Input value={facebook} onChange={e => setFacebook(e.target.value)} placeholder="facebook.com/negocio" /></div>
                 <div className="space-y-2"><Label>TikTok</Label><Input value={tiktok} onChange={e => setTiktok(e.target.value)} placeholder="@negocio" /></div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="notificaciones">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" /> Notificaciones por Email
+              </CardTitle>
+              <CardDescription>Configura qué notificaciones envía tu negocio</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label>Email para alertas del admin</Label>
+                <Input
+                  value={notificationEmail}
+                  onChange={e => setNotificationEmail(e.target.value)}
+                  placeholder="admin@negocio.com (si vacío, usa el email de contacto)"
+                  type="email"
+                />
+                <p className="text-xs text-muted-foreground">Recibirás notificaciones de nuevas citas en este correo</p>
+              </div>
+              <Separator />
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Confirmación de cita al cliente</p>
+                    <p className="text-xs text-muted-foreground">Se envía al cliente al agendar una cita</p>
+                  </div>
+                  <Switch
+                    checked={notifications.booking_confirmation}
+                    onCheckedChange={v => setNotifications(prev => ({ ...prev, booking_confirmation: v }))}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Cancelación de cita</p>
+                    <p className="text-xs text-muted-foreground">Se envía al cliente cuando se cancela su cita</p>
+                  </div>
+                  <Switch
+                    checked={notifications.cancellation}
+                    onCheckedChange={v => setNotifications(prev => ({ ...prev, cancellation: v }))}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Recordatorio 1h antes</p>
+                    <p className="text-xs text-muted-foreground">Se envía al cliente 1 hora antes de la cita</p>
+                  </div>
+                  <Switch
+                    checked={notifications.reminder}
+                    onCheckedChange={v => setNotifications(prev => ({ ...prev, reminder: v }))}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Alerta de nueva cita (admin)</p>
+                    <p className="text-xs text-muted-foreground">Notificación al admin cuando se agenda una cita nueva</p>
+                  </div>
+                  <Switch
+                    checked={notifications.admin_new_booking}
+                    onCheckedChange={v => setNotifications(prev => ({ ...prev, admin_new_booking: v }))}
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
