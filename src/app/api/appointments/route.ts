@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { sendBookingConfirmation } from '@/lib/email/send'
 
 function generateConfirmationCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -54,6 +55,30 @@ export async function POST(request: Request) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 })
+  }
+
+  // Send email notification (non-blocking)
+  try {
+    const [bizRes, svcRes, staffRes] = await Promise.all([
+      supabase.from('businesses').select('name, slug').eq('id', business_id).single(),
+      supabase.from('services').select('name, price, duration_minutes').eq('id', service_id).single(),
+      supabase.from('staff').select('name').eq('id', staff_id).single(),
+    ])
+
+    sendBookingConfirmation({
+      businessName: bizRes.data?.name || '',
+      businessSlug: bizRes.data?.slug || '',
+      clientName: client_name,
+      clientEmail: client_email,
+      serviceName: svcRes.data?.name || '',
+      staffName: staffRes.data?.name || '',
+      scheduledAt: scheduled_at,
+      confirmationCode: confirmation_code,
+      price: Number(svcRes.data?.price) || 0,
+      duration: svcRes.data?.duration_minutes || 0,
+    }).catch(() => {})
+  } catch {
+    // Email sending should not block the response
   }
 
   return NextResponse.json(data, { status: 201 })
