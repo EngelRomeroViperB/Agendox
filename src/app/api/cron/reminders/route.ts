@@ -16,7 +16,6 @@ export async function GET(request: Request) {
 
   const now = new Date()
   const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000)
-  const fifteenMinAgo = new Date(now.getTime() - 15 * 60 * 1000)
 
   // Find appointments in the next hour that haven't been reminded
   // We use a 15-min window to avoid double-sending

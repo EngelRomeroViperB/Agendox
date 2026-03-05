@@ -1,6 +1,5 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import crypto from 'crypto'
 
 // POST: Crear link de pago en Wompi para suscripción
 export async function POST(request: Request) {
@@ -47,12 +46,6 @@ export async function POST(request: Request) {
   )
 
   const reference = `agendox_${bu.business_id}_${Date.now()}`
-
-  // Generar firma de integridad para Wompi
-  const integrityKey = process.env.WOMPI_INTEGRITY_KEY || ''
-  const signatureString = `${reference}${priceInCents}COP${integrityKey}`
-  const signature = crypto.createHash('sha256').update(signatureString).digest('hex')
-
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
   // Crear transacción en Wompi via API
@@ -101,7 +94,7 @@ export async function POST(request: Request) {
       .update({
         gateway_reference: reference,
         gateway: 'wompi',
-      } as any)
+      } as Record<string, unknown>)
       .eq('id', existingSub.id)
   } else {
     await admin
@@ -117,7 +110,7 @@ export async function POST(request: Request) {
         current_period_end: new Date(
           Date.now() + (billing_cycle === 'yearly' ? 365 : 30) * 24 * 60 * 60 * 1000
         ).toISOString(),
-      } as any)
+      } as Record<string, unknown>)
   }
 
   return NextResponse.json({

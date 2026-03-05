@@ -38,9 +38,9 @@ export default function DevReports() {
         setBusinesses(Array.isArray(bizData) ? bizData : [])
         const subs = Array.isArray(subsData) ? subsData : []
         setSubSummary({
-          active: subs.filter((s: any) => s.status === 'active').length,
-          trialing: subs.filter((s: any) => s.status === 'trialing').length,
-          expired: subs.filter((s: any) => ['expired', 'cancelled', 'past_due'].includes(s.status)).length,
+          active: subs.filter((s: { status: string }) => s.status === 'active').length,
+          trialing: subs.filter((s: { status: string }) => s.status === 'trialing').length,
+          expired: subs.filter((s: { status: string }) => ['expired', 'cancelled', 'past_due'].includes(s.status)).length,
           total: subs.length,
         })
         setLoading(false)

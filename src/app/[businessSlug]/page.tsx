@@ -6,7 +6,7 @@ import { useBusiness } from '@/lib/context/business-context'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { Clock, DollarSign, MapPin, Phone, Mail, Instagram, MessageCircle, CalendarCheck, Star, ArrowRight } from 'lucide-react'
+import { Clock, MapPin, Phone, Mail, Instagram, MessageCircle, CalendarCheck, Star, ArrowRight } from 'lucide-react'
 import { FadeIn } from '@/components/ui/fade-in'
 
 export default function BusinessLanding() {

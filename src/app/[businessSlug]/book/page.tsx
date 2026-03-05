@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Calendar } from '@/components/ui/calendar'
 import { toast } from 'sonner'
-import { ArrowLeft, ArrowRight, Clock, DollarSign, Check, Loader2, User } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Clock, Check, Loader2, User } from 'lucide-react'
 import { addDays, format, isBefore, startOfDay } from 'date-fns'
 import { es } from 'date-fns/locale'
 import type { Service, Staff } from '@/lib/types'
@@ -78,6 +78,7 @@ export default function BookAppointment() {
         setAvailableSlots([])
         setLoadingSlots(false)
       })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate, selectedService, selectedStaff, noPreference])
 
   const handleSubmit = async () => {

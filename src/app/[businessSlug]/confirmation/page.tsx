@@ -7,7 +7,7 @@ import { useBusiness } from '@/lib/context/business-context'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { CheckCircle, Copy, Calendar, ArrowLeft, Clock, User, Share2, MessageCircle, CalendarPlus } from 'lucide-react'
+import { CheckCircle, Copy, Calendar, ArrowLeft, Clock, User, MessageCircle, CalendarPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -30,9 +30,6 @@ export default function Confirmation() {
   const code = searchParams.get('code')
   const [appointment, setAppointment] = useState<AppointmentData | null>(null)
   const [loading, setLoading] = useState(true)
-
-  const socialLinks = profile.social_links as Record<string, string> | null
-  const whatsappNumber = socialLinks?.whatsapp?.replace(/\D/g, '')
 
   useEffect(() => {
     if (!code) { setLoading(false); return }

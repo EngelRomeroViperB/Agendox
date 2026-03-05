@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   startOfWeek,
   endOfWeek,
@@ -22,7 +22,6 @@ import {
   setHours,
   setMinutes,
   getHours,
-  getMinutes,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
 

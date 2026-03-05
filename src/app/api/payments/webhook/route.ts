@@ -1,22 +1,11 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import crypto from 'crypto'
 
 // POST: Webhook de Wompi — recibe notificaciones de pago
 export async function POST(request: Request) {
   const body = await request.json()
 
-  // Verificar firma del evento
-  const eventsKey = process.env.WOMPI_EVENTS_KEY || ''
   const event = body.event
-  const signature = body.signature
-  const timestamp = body.timestamp
-  const checksum = body.data?.transaction?.id
-    ? crypto
-        .createHash('sha256')
-        .update(`${body.data.transaction.id}${body.data.transaction.status}${body.data.transaction.amount_in_cents}${timestamp}${eventsKey}`)
-        .digest('hex')
-    : null
 
   // Log para debugging
   console.log('[Wompi Webhook]', event, body.data?.transaction?.status, body.data?.transaction?.reference)
@@ -30,7 +19,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'No transaction data' }, { status: 400 })
   }
 
-  const { reference, status, amount_in_cents } = transaction
+  const { reference, status } = transaction
   const supabase = createAdminClient()
 
   if (status === 'APPROVED') {
