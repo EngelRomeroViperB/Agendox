@@ -10,28 +10,32 @@ import {
   Scissors,
   Settings,
   UserSearch,
+  UserCog,
   LogOut,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/lib/hooks/use-auth'
 
-const navItems = [
+const ownerItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/appointments', label: 'Citas', icon: Calendar },
   { href: '/admin/staff', label: 'Staff', icon: Users },
   { href: '/admin/services', label: 'Servicios', icon: Scissors },
-  { href: '/admin/settings', label: 'Configuración', icon: Settings },
+  { href: '/admin/employees', label: 'Empleados', icon: UserCog },
   { href: '/admin/clients', label: 'Clientes', icon: UserSearch },
+  { href: '/admin/settings', label: 'Configuración', icon: Settings },
+]
+
+const employeeItems = [
+  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/appointments', label: 'Citas', icon: Calendar },
 ]
 
 export function AdminSidebar() {
   const pathname = usePathname()
   const { signOut, role } = useAuth()
 
-  // Si es empleado, solo mostrar Citas
-  const items = role === 'employee'
-    ? navItems.filter((item) => item.href === '/admin/appointments')
-    : navItems
+  const items = role === 'employee' ? employeeItems : ownerItems
 
   return (
     <aside className="w-64 border-r min-h-screen p-4 flex flex-col">

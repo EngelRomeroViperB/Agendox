@@ -13,10 +13,10 @@ export async function GET(request: Request) {
 
   const admin = createAdminClient()
 
-  // Obtener business_id del usuario
+  // Obtener business_id y staff_id del usuario
   const { data: businessUser } = await admin
     .from('business_users')
-    .select('business_id')
+    .select('business_id, role, staff_id')
     .eq('id', user.id)
     .single()
 
@@ -28,6 +28,7 @@ export async function GET(request: Request) {
   const status = searchParams.get('status')
   const from = searchParams.get('from')
   const to = searchParams.get('to')
+  const staffIdParam = searchParams.get('staff_id')
 
   let query = admin
     .from('appointments')
@@ -38,6 +39,13 @@ export async function GET(request: Request) {
     `)
     .eq('business_id', businessUser.business_id)
     .order('scheduled_at', { ascending: true })
+
+  // Si es empleado con staff_id vinculado, filtrar solo sus citas
+  if (businessUser.role === 'employee' && businessUser.staff_id) {
+    query = query.eq('staff_id', businessUser.staff_id)
+  } else if (staffIdParam) {
+    query = query.eq('staff_id', staffIdParam)
+  }
 
   if (status && status !== 'all') {
     query = query.eq('status', status)
