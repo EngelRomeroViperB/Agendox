@@ -12,6 +12,7 @@ import {
   UserSearch,
   UserCog,
   CreditCard,
+  BarChart3,
   LogOut,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -24,6 +25,7 @@ const ownerItems = [
   { href: '/admin/services', label: 'Servicios', icon: Scissors },
   { href: '/admin/employees', label: 'Empleados', icon: UserCog },
   { href: '/admin/clients', label: 'Clientes', icon: UserSearch },
+  { href: '/admin/reports', label: 'Reportes', icon: BarChart3 },
   { href: '/admin/subscription', label: 'Suscripción', icon: CreditCard },
   { href: '/admin/settings', label: 'Configuración', icon: Settings },
 ]
