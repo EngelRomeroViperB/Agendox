@@ -19,41 +19,38 @@ export default function AdminLogin() {
 
   // Al cargar: si viene de logout, no auto-redirigir. Si tiene sesión válida, redirigir.
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const loggedOut = params.get('logged_out')
-    if (loggedOut === '1') {
-      // Viene de cerrar sesión — no auto-redirigir
-      setChecking(false)
-      return
-    }
+    const check = async () => {
+      try {
+        const params = new URLSearchParams(window.location.search)
+        if (params.get('logged_out') === '1') return
 
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        // Tiene sesión activa — redirigir según rol
+        if (user.app_metadata?.role === 'superadmin') {
+          router.replace('/dev')
+          return
+        }
+
+        const { data: bu } = await supabase
+          .from('business_users')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+
+        if (bu?.role === 'employee') {
+          router.replace('/admin/appointments')
+        } else if (bu) {
+          router.replace('/admin/dashboard')
+        }
+      } catch {
+        // Si algo falla, simplemente mostrar el login
+      } finally {
         setChecking(false)
-        return
       }
-
-      // Tiene sesión activa — redirigir según rol
-      if (user.app_metadata?.role === 'superadmin') {
-        router.replace('/dev')
-        return
-      }
-
-      supabase
-        .from('business_users')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-        .then(({ data: bu }) => {
-          if (bu?.role === 'employee') {
-            router.replace('/admin/appointments')
-          } else if (bu) {
-            router.replace('/admin/dashboard')
-          } else {
-            setChecking(false)
-          }
-        })
-    })
+    }
+    check()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
