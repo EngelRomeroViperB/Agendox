@@ -1,23 +1,11 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-
-async function getBusinessId(userId: string) {
-  const admin = createAdminClient()
-  const { data } = await admin
-    .from('business_users')
-    .select('business_id')
-    .eq('id', userId)
-    .single()
-  return data?.business_id || null
-}
+import { getBusinessContext } from '@/lib/auth/get-business-id'
 
 export async function GET() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
-
-  const businessId = await getBusinessId(user.id)
-  if (!businessId) return NextResponse.json({ error: 'Sin negocio' }, { status: 403 })
+  const ctx = await getBusinessContext()
+  if (!ctx) return NextResponse.json({ error: 'No autenticado o sin negocio' }, { status: 401 })
+  const businessId = ctx.businessId
 
   const admin = createAdminClient()
   const { data, error } = await admin
@@ -31,19 +19,15 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
-
-  const businessId = await getBusinessId(user.id)
-  if (!businessId) return NextResponse.json({ error: 'Sin negocio' }, { status: 403 })
+  const ctx = await getBusinessContext()
+  if (!ctx) return NextResponse.json({ error: 'No autenticado o sin negocio' }, { status: 401 })
 
   const body = await request.json()
   const admin = createAdminClient()
 
   const { data, error } = await admin
     .from('services')
-    .insert({ ...body, business_id: businessId })
+    .insert({ ...body, business_id: ctx.businessId })
     .select()
     .single()
 
@@ -52,12 +36,8 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
-
-  const businessId = await getBusinessId(user.id)
-  if (!businessId) return NextResponse.json({ error: 'Sin negocio' }, { status: 403 })
+  const ctx = await getBusinessContext()
+  if (!ctx) return NextResponse.json({ error: 'No autenticado o sin negocio' }, { status: 401 })
 
   const body = await request.json()
   const { id, ...updates } = body
@@ -67,19 +47,15 @@ export async function PATCH(request: Request) {
     .from('services')
     .update(updates)
     .eq('id', id)
-    .eq('business_id', businessId)
+    .eq('business_id', ctx.businessId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
   return NextResponse.json({ success: true })
 }
 
 export async function DELETE(request: Request) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
-
-  const businessId = await getBusinessId(user.id)
-  if (!businessId) return NextResponse.json({ error: 'Sin negocio' }, { status: 403 })
+  const ctx = await getBusinessContext()
+  if (!ctx) return NextResponse.json({ error: 'No autenticado o sin negocio' }, { status: 401 })
 
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
@@ -90,7 +66,7 @@ export async function DELETE(request: Request) {
     .from('services')
     .delete()
     .eq('id', id)
-    .eq('business_id', businessId)
+    .eq('business_id', ctx.businessId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
   return NextResponse.json({ success: true })

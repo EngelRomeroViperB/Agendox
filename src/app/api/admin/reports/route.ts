@@ -1,25 +1,13 @@
 import { NextResponse } from 'next/server'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns'
-
-async function getBusinessId(userId: string) {
-  const admin = createAdminClient()
-  const { data } = await admin
-    .from('business_users')
-    .select('business_id')
-    .eq('id', userId)
-    .single()
-  return data?.business_id
-}
+import { getBusinessContext } from '@/lib/auth/get-business-id'
 
 // GET: Generate reports for the business
 export async function GET(request: Request) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
-
-  const businessId = await getBusinessId(user.id)
-  if (!businessId) return NextResponse.json({ error: 'Sin negocio' }, { status: 403 })
+  const ctx = await getBusinessContext()
+  if (!ctx) return NextResponse.json({ error: 'No autenticado o sin negocio' }, { status: 401 })
+  const businessId = ctx.businessId
 
   const admin = createAdminClient()
   const { searchParams } = new URL(request.url)

@@ -1,24 +1,12 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-
-async function getBusinessId(userId: string) {
-  const admin = createAdminClient()
-  const { data } = await admin
-    .from('business_users')
-    .select('business_id')
-    .eq('id', userId)
-    .single()
-  return data?.business_id || null
-}
+import { getBusinessContext } from '@/lib/auth/get-business-id'
 
 // GET: Obtener perfil y configuración del negocio
 export async function GET() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
-
-  const businessId = await getBusinessId(user.id)
-  if (!businessId) return NextResponse.json({ error: 'Sin negocio' }, { status: 403 })
+  const ctx = await getBusinessContext()
+  if (!ctx) return NextResponse.json({ error: 'No autenticado o sin negocio' }, { status: 401 })
+  const businessId = ctx.businessId
 
   const admin = createAdminClient()
   const [bizRes, profileRes, themeRes] = await Promise.all([
@@ -36,12 +24,9 @@ export async function GET() {
 
 // PATCH: Actualizar configuración
 export async function PATCH(request: Request) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
-
-  const businessId = await getBusinessId(user.id)
-  if (!businessId) return NextResponse.json({ error: 'Sin negocio' }, { status: 403 })
+  const ctx = await getBusinessContext()
+  if (!ctx) return NextResponse.json({ error: 'No autenticado o sin negocio' }, { status: 401 })
+  const businessId = ctx.businessId
 
   const body = await request.json()
   const { profile, theme } = body

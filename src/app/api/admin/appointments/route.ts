@@ -1,28 +1,13 @@
-import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { getBusinessContext } from '@/lib/auth/get-business-id'
 
 // GET: Listar citas del negocio del admin autenticado
 export async function GET(request: Request) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
-  }
+  const ctx = await getBusinessContext()
+  if (!ctx) return NextResponse.json({ error: 'No autenticado o sin negocio' }, { status: 401 })
 
   const admin = createAdminClient()
-
-  // Obtener business_id y staff_id del usuario
-  const { data: businessUser } = await admin
-    .from('business_users')
-    .select('business_id, role, staff_id')
-    .eq('id', user.id)
-    .single()
-
-  if (!businessUser) {
-    return NextResponse.json({ error: 'Sin negocio asociado' }, { status: 403 })
-  }
 
   const { searchParams } = new URL(request.url)
   const status = searchParams.get('status')
@@ -37,12 +22,12 @@ export async function GET(request: Request) {
       staff(name),
       services(name, duration_minutes, price)
     `)
-    .eq('business_id', businessUser.business_id)
+    .eq('business_id', ctx.businessId)
     .order('scheduled_at', { ascending: true })
 
   // Si es empleado con staff_id vinculado, filtrar solo sus citas
-  if (businessUser.role === 'employee' && businessUser.staff_id) {
-    query = query.eq('staff_id', businessUser.staff_id)
+  if (ctx.role === 'employee' && ctx.staffId) {
+    query = query.eq('staff_id', ctx.staffId)
   } else if (staffIdParam) {
     query = query.eq('staff_id', staffIdParam)
   }
@@ -63,17 +48,13 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ appointments: data, business_id: businessUser.business_id })
+  return NextResponse.json({ appointments: data, business_id: ctx.businessId })
 }
 
 // PATCH: Actualizar estado de una cita
 export async function PATCH(request: Request) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
-  }
+  const ctx = await getBusinessContext()
+  if (!ctx) return NextResponse.json({ error: 'No autenticado o sin negocio' }, { status: 401 })
 
   const admin = createAdminClient()
   const body = await request.json()
@@ -83,22 +64,11 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: 'appointment_id y status requeridos' }, { status: 400 })
   }
 
-  // Verificar que la cita pertenece al negocio del admin
-  const { data: businessUser } = await admin
-    .from('business_users')
-    .select('business_id')
-    .eq('id', user.id)
-    .single()
-
-  if (!businessUser) {
-    return NextResponse.json({ error: 'Sin negocio asociado' }, { status: 403 })
-  }
-
   const { error } = await admin
     .from('appointments')
     .update({ status })
     .eq('id', appointment_id)
-    .eq('business_id', businessUser.business_id)
+    .eq('business_id', ctx.businessId)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 })

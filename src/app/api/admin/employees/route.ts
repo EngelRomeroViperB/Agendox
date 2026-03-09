@@ -1,31 +1,18 @@
 import { NextResponse } from 'next/server'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
-
-async function getBusinessId(userId: string) {
-  const admin = createAdminClient()
-  const { data } = await admin
-    .from('business_users')
-    .select('business_id, role')
-    .eq('id', userId)
-    .single()
-  return data
-}
+import { createAdminClient } from '@/lib/supabase/server'
+import { getBusinessContext } from '@/lib/auth/get-business-id'
 
 // GET: list employees of the business
 export async function GET() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
-
-  const bu = await getBusinessId(user.id)
-  if (!bu?.business_id) return NextResponse.json({ error: 'Sin negocio' }, { status: 403 })
-  if (bu.role !== 'owner') return NextResponse.json({ error: 'Solo el owner puede gestionar empleados' }, { status: 403 })
+  const ctx = await getBusinessContext()
+  if (!ctx) return NextResponse.json({ error: 'No autenticado o sin negocio' }, { status: 401 })
+  if (ctx.role !== 'owner') return NextResponse.json({ error: 'Solo el owner puede gestionar empleados' }, { status: 403 })
 
   const admin = createAdminClient()
   const { data, error } = await admin
     .from('business_users')
     .select('id, role, staff_id')
-    .eq('business_id', bu.business_id)
+    .eq('business_id', ctx.businessId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
@@ -45,13 +32,9 @@ export async function GET() {
 
 // POST: create a new employee account (invite via email/password)
 export async function POST(request: Request) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
-
-  const bu = await getBusinessId(user.id)
-  if (!bu?.business_id) return NextResponse.json({ error: 'Sin negocio' }, { status: 403 })
-  if (bu.role !== 'owner') return NextResponse.json({ error: 'Solo el owner' }, { status: 403 })
+  const ctx = await getBusinessContext()
+  if (!ctx) return NextResponse.json({ error: 'No autenticado o sin negocio' }, { status: 401 })
+  if (ctx.role !== 'owner') return NextResponse.json({ error: 'Solo el owner' }, { status: 403 })
 
   const { email, password, staff_id } = await request.json()
   if (!email || !password) return NextResponse.json({ error: 'Email y contraseña requeridos' }, { status: 400 })
@@ -71,7 +54,7 @@ export async function POST(request: Request) {
   // Create business_user row
   const { error: buError } = await admin.from('business_users').insert({
     id: newUser.user.id,
-    business_id: bu.business_id,
+    business_id: ctx.businessId,
     role: 'employee',
     staff_id: staff_id || null,
   })
@@ -87,13 +70,9 @@ export async function POST(request: Request) {
 
 // PATCH: update employee (link/unlink staff_id)
 export async function PATCH(request: Request) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
-
-  const bu = await getBusinessId(user.id)
-  if (!bu?.business_id) return NextResponse.json({ error: 'Sin negocio' }, { status: 403 })
-  if (bu.role !== 'owner') return NextResponse.json({ error: 'Solo el owner' }, { status: 403 })
+  const ctx = await getBusinessContext()
+  if (!ctx) return NextResponse.json({ error: 'No autenticado o sin negocio' }, { status: 401 })
+  if (ctx.role !== 'owner') return NextResponse.json({ error: 'Solo el owner' }, { status: 403 })
 
   const { employee_id, staff_id } = await request.json()
   if (!employee_id) return NextResponse.json({ error: 'employee_id requerido' }, { status: 400 })
@@ -103,7 +82,7 @@ export async function PATCH(request: Request) {
     .from('business_users')
     .update({ staff_id: staff_id || null })
     .eq('id', employee_id)
-    .eq('business_id', bu.business_id)
+    .eq('business_id', ctx.businessId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
   return NextResponse.json({ success: true })
@@ -111,23 +90,19 @@ export async function PATCH(request: Request) {
 
 // DELETE: remove employee account
 export async function DELETE(request: Request) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
-
-  const bu = await getBusinessId(user.id)
-  if (!bu?.business_id) return NextResponse.json({ error: 'Sin negocio' }, { status: 403 })
-  if (bu.role !== 'owner') return NextResponse.json({ error: 'Solo el owner' }, { status: 403 })
+  const ctx = await getBusinessContext()
+  if (!ctx) return NextResponse.json({ error: 'No autenticado o sin negocio' }, { status: 401 })
+  if (ctx.role !== 'owner') return NextResponse.json({ error: 'Solo el owner' }, { status: 403 })
 
   const { searchParams } = new URL(request.url)
   const employeeId = searchParams.get('id')
   if (!employeeId) return NextResponse.json({ error: 'id requerido' }, { status: 400 })
-  if (employeeId === user.id) return NextResponse.json({ error: 'No puedes eliminarte a ti mismo' }, { status: 400 })
+  if (employeeId === ctx.userId) return NextResponse.json({ error: 'No puedes eliminarte a ti mismo' }, { status: 400 })
 
   const admin = createAdminClient()
 
   // Delete business_user row first
-  await admin.from('business_users').delete().eq('id', employeeId).eq('business_id', bu.business_id)
+  await admin.from('business_users').delete().eq('id', employeeId).eq('business_id', ctx.businessId)
 
   // Delete auth user
   await admin.auth.admin.deleteUser(employeeId)

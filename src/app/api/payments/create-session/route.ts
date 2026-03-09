@@ -1,20 +1,14 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { getBusinessContext } from '@/lib/auth/get-business-id'
 
 // POST: Crear link de pago en Wompi para suscripción
 export async function POST(request: Request) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+  const ctx = await getBusinessContext()
+  if (!ctx) return NextResponse.json({ error: 'No autenticado o sin negocio' }, { status: 401 })
 
   const admin = createAdminClient()
-  const { data: bu } = await admin
-    .from('business_users')
-    .select('business_id')
-    .eq('id', user.id)
-    .single()
-
-  if (!bu) return NextResponse.json({ error: 'Sin negocio' }, { status: 403 })
+  const bu = { business_id: ctx.businessId }
 
   const body = await request.json()
   const { plan_id, billing_cycle } = body

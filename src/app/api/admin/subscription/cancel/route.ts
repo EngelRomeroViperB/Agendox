@@ -1,25 +1,18 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { getBusinessContext } from '@/lib/auth/get-business-id'
 
 // POST: Cancelar suscripción (no renueva al final del periodo)
 export async function POST() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+  const ctx = await getBusinessContext()
+  if (!ctx) return NextResponse.json({ error: 'No autenticado o sin negocio' }, { status: 401 })
 
   const admin = createAdminClient()
-  const { data: bu } = await admin
-    .from('business_users')
-    .select('business_id')
-    .eq('id', user.id)
-    .single()
-
-  if (!bu) return NextResponse.json({ error: 'Sin negocio' }, { status: 403 })
 
   const { data: sub } = await admin
     .from('subscriptions')
     .select('id, status')
-    .eq('business_id', bu.business_id)
+    .eq('business_id', ctx.businessId)
     .order('created_at', { ascending: false })
     .limit(1)
     .single()
