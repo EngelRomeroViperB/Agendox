@@ -49,7 +49,10 @@ export async function POST(request: Request) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
   // Crear transacción en Wompi via API
-  const wompiRes = await fetch('https://sandbox.wompi.co/v1/payment_links', {
+  const wompiBaseUrl = process.env.WOMPI_PRIVATE_KEY?.startsWith('prv_prod')
+    ? 'https://production.wompi.co/v1'
+    : 'https://sandbox.wompi.co/v1'
+  const wompiRes = await fetch(`${wompiBaseUrl}/payment_links`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -102,7 +105,7 @@ export async function POST(request: Request) {
       .insert({
         business_id: bu.business_id,
         plan_id: plan.id,
-        status: 'pending',
+        status: 'trialing',
         billing_cycle: billing_cycle || 'monthly',
         gateway: 'wompi',
         gateway_reference: reference,
