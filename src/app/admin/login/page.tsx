@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,12 +15,12 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false)
   const [checking, setChecking] = useState(true)
   const router = useRouter()
-  const searchParams = useSearchParams()
   const supabase = createClient()
 
   // Al cargar: si viene de logout, no auto-redirigir. Si tiene sesión válida, redirigir.
   useEffect(() => {
-    const loggedOut = searchParams.get('logged_out')
+    const params = new URLSearchParams(window.location.search)
+    const loggedOut = params.get('logged_out')
     if (loggedOut === '1') {
       // Viene de cerrar sesión — no auto-redirigir
       setChecking(false)
