@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,8 +13,49 @@ export default function AdminLogin() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [checking, setChecking] = useState(true)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
+
+  // Al cargar: si viene de logout, no auto-redirigir. Si tiene sesión válida, redirigir.
+  useEffect(() => {
+    const loggedOut = searchParams.get('logged_out')
+    if (loggedOut === '1') {
+      // Viene de cerrar sesión — no auto-redirigir
+      setChecking(false)
+      return
+    }
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) {
+        setChecking(false)
+        return
+      }
+
+      // Tiene sesión activa — redirigir según rol
+      if (user.app_metadata?.role === 'superadmin') {
+        router.replace('/dev')
+        return
+      }
+
+      supabase
+        .from('business_users')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+        .then(({ data: bu }) => {
+          if (bu?.role === 'employee') {
+            router.replace('/admin/appointments')
+          } else if (bu) {
+            router.replace('/admin/dashboard')
+          } else {
+            setChecking(false)
+          }
+        })
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,6 +101,14 @@ export default function AdminLogin() {
     } else {
       router.push('/admin/dashboard')
     }
+  }
+
+  if (checking) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background p-4">
+        <p className="text-muted-foreground">Cargando...</p>
+      </div>
+    )
   }
 
   return (

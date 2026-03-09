@@ -135,10 +135,12 @@ export function useAuth() {
       window.location.href = '/dev'
       return
     }
+    // Usar endpoint server-side para limpiar cookies correctamente
+    await fetch('/api/auth/signout', { method: 'POST' })
     await supabase.auth.signOut({ scope: 'global' })
     setAuthState({ user: null, role: null, businessId: null, staffId: null, loading: false, impersonating: null })
     // Force full page reload to clear all cached state
-    window.location.href = '/admin/login'
+    window.location.href = '/admin/login?logged_out=1'
   }
 
   const stopImpersonating = async () => {
