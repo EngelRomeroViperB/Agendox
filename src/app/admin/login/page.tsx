@@ -13,44 +13,24 @@ export default function AdminLogin() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [checking, setChecking] = useState(true)
   const router = useRouter()
   const supabase = createClient()
 
-  // Al cargar: si viene de logout, no auto-redirigir. Si tiene sesión válida, redirigir.
+  // Si tiene sesión activa y no viene de logout, redirigir en background
   useEffect(() => {
-    const check = async () => {
-      try {
-        const params = new URLSearchParams(window.location.search)
-        if (params.get('logged_out') === '1') return
+    try {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('logged_out') === '1') return
+    } catch { return }
 
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
-
-        // Tiene sesión activa — redirigir según rol
-        if (user.app_metadata?.role === 'superadmin') {
-          router.replace('/dev')
-          return
-        }
-
-        const { data: bu } = await supabase
-          .from('business_users')
-          .select('role')
-          .eq('id', user.id)
-          .single()
-
-        if (bu?.role === 'employee') {
-          router.replace('/admin/appointments')
-        } else if (bu) {
-          router.replace('/admin/dashboard')
-        }
-      } catch {
-        // Si algo falla, simplemente mostrar el login
-      } finally {
-        setChecking(false)
-      }
-    }
-    check()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      if (user.app_metadata?.role === 'superadmin') { router.replace('/dev'); return }
+      supabase.from('business_users').select('role').eq('id', user.id).single().then(({ data: bu }) => {
+        if (bu?.role === 'employee') router.replace('/admin/appointments')
+        else if (bu) router.replace('/admin/dashboard')
+      })
+    })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -98,14 +78,6 @@ export default function AdminLogin() {
     } else {
       router.push('/admin/dashboard')
     }
-  }
-
-  if (checking) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background p-4">
-        <p className="text-muted-foreground">Cargando...</p>
-      </div>
-    )
   }
 
   return (
