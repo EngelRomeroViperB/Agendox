@@ -38,45 +38,50 @@ export default function AdminLogin() {
     e.preventDefault()
     setLoading(true)
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
-      toast.error('Error al iniciar sesión', {
-        description: error.message,
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       })
+
+      if (error) {
+        toast.error('Error al iniciar sesión', {
+          description: error.message,
+        })
+        return
+      }
+
+      const user = data.user
+
+      // Verificar si es superadmin
+      if (user?.app_metadata?.role === 'superadmin') {
+        window.location.href = '/dev'
+        return
+      }
+
+      // Buscar en business_users para determinar rol
+      const { data: businessUser, error: buError } = await supabase
+        .from('business_users')
+        .select('business_id, role')
+        .eq('id', user?.id)
+        .single()
+
+      if (buError || !businessUser) {
+        toast.error('No se encontró un negocio asociado a este usuario')
+        await supabase.auth.signOut()
+        return
+      }
+
+      if (businessUser.role === 'employee') {
+        window.location.href = '/admin/appointments'
+      } else {
+        window.location.href = '/admin/dashboard'
+      }
+    } catch (err) {
+      console.error('[Login] Error:', err)
+      toast.error('Error inesperado al iniciar sesión')
+    } finally {
       setLoading(false)
-      return
-    }
-
-    const user = data.user
-
-    // Verificar si es superadmin
-    if (user?.app_metadata?.role === 'superadmin') {
-      router.push('/dev')
-      return
-    }
-
-    // Buscar en business_users para determinar rol
-    const { data: businessUser, error: buError } = await supabase
-      .from('business_users')
-      .select('business_id, role')
-      .eq('id', user?.id)
-      .single()
-
-    if (buError || !businessUser) {
-      toast.error('No se encontró un negocio asociado a este usuario')
-      await supabase.auth.signOut()
-      setLoading(false)
-      return
-    }
-
-    if (businessUser.role === 'employee') {
-      router.push('/admin/appointments')
-    } else {
-      router.push('/admin/dashboard')
     }
   }
 

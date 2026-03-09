@@ -130,15 +130,14 @@ export function useAuth() {
   const signOut = async () => {
     // Clear impersonation if active
     if (authState.impersonating) {
-      await fetch('/api/dev/impersonate', { method: 'DELETE' })
-      setAuthState({ user: authState.user, role: 'superadmin', businessId: null, staffId: null, loading: false, impersonating: null })
+      try { await fetch('/api/dev/impersonate', { method: 'DELETE' }) } catch {}
       window.location.href = '/dev'
       return
     }
-    // Usar endpoint server-side para limpiar cookies correctamente
-    await fetch('/api/auth/signout', { method: 'POST' })
-    await supabase.auth.signOut({ scope: 'global' })
-    setAuthState({ user: null, role: null, businessId: null, staffId: null, loading: false, impersonating: null })
+    // Limpiar cookies server-side (fire-and-forget, no bloquear)
+    fetch('/api/auth/signout', { method: 'POST' }).catch(() => {})
+    // Signout client-side inmediato
+    try { await supabase.auth.signOut({ scope: 'global' }) } catch {}
     // Force full page reload to clear all cached state
     window.location.href = '/admin/login?logged_out=1'
   }
