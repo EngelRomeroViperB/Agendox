@@ -84,5 +84,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: profileError.message }, { status: 400 })
   }
 
+  // 4. Crear suscripción gratuita (trial 14 días)
+  const { data: freePlan } = await supabase
+    .from('subscription_plans')
+    .select('id')
+    .eq('slug', 'free')
+    .single()
+
+  if (freePlan) {
+    await supabase.from('subscriptions').insert({
+      business_id: businessId,
+      plan_id: freePlan.id,
+      status: 'trialing',
+      billing_cycle: 'monthly',
+      current_period_start: new Date().toISOString(),
+      current_period_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+    })
+  }
+
   return NextResponse.json(business, { status: 201 })
 }
