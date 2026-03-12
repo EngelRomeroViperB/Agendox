@@ -3,9 +3,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useBusiness } from '@/lib/context/business-context'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { Clock, MapPin, Phone, Mail, Instagram, MessageCircle, CalendarCheck, Star, ArrowRight } from 'lucide-react'
 import { FadeIn } from '@/components/ui/fade-in'
 
@@ -20,174 +17,205 @@ export default function BusinessLanding() {
   const whatsappNumber = socialLinks?.whatsapp?.replace(/\D/g, '')
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero / Banner */}
-      <header className="relative overflow-hidden">
-        {theme.banner_url ? (
-          <div className="w-full h-72 md:h-96 relative">
+    <div style={{ backgroundColor: '#121212', color: '#E0E0E0', minHeight: '100vh' }}>
+
+      {/* Hero */}
+      <header
+        className="relative min-h-[70vh] flex flex-col items-center justify-center text-center px-6 border-b border-white/5"
+        style={
+          theme.banner_url
+            ? {
+                backgroundImage: `linear-gradient(rgba(18,18,18,0.82), rgba(18,18,18,0.96)), url(${theme.banner_url})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }
+            : { background: 'linear-gradient(135deg, #1a1a1a 0%, #121212 100%)' }
+        }
+      >
+        {theme.logo_url && (
+          <div className="mb-6 rounded-full bg-white/10 p-1 shadow-xl backdrop-blur-sm">
             <Image
-              src={theme.banner_url}
-              alt={business.name}
-              fill
-              className="object-cover"
-              priority
+              src={theme.logo_url}
+              alt={`Logo ${business.name}`}
+              width={80}
+              height={80}
+              className="rounded-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
           </div>
-        ) : (
-          <div
-            className="w-full h-72 md:h-96 relative"
-            style={{ background: `linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary) 60%, color-mix(in srgb, var(--color-primary), black 30%) 100%)` }}
-          />
         )}
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4">
-          {theme.logo_url && (
-            <div className="mb-4 rounded-full bg-white/90 p-1.5 shadow-xl">
-              <Image
-                src={theme.logo_url}
-                alt={`Logo ${business.name}`}
-                width={80}
-                height={80}
-                className="rounded-full object-cover"
-              />
-            </div>
-          )}
-          <h1 className="text-3xl md:text-5xl font-bold drop-shadow-lg">{business.name}</h1>
-          {profile.description && (
-            <p className="mt-3 text-base md:text-lg max-w-lg opacity-90 drop-shadow">{profile.description}</p>
-          )}
-          <div className="flex gap-3 mt-6">
-            <Link href={`/${business.slug}/book`}>
-              <Button
-                size="lg"
-                className="text-base px-6 py-5 shadow-lg hover:shadow-xl transition-all hover:scale-105"
-                style={{
-                  backgroundColor: 'var(--color-primary)',
-                  color: 'var(--color-secondary)',
-                }}
-              >
-                <CalendarCheck className="h-5 w-5 mr-2" />
-                Agendar mi cita
-              </Button>
-            </Link>
-            <Link href={`/${business.slug}/my-appointment`}>
-              <Button
-                size="lg"
-                variant="outline"
-                className="text-base px-6 py-5 bg-white/10 backdrop-blur border-white/30 text-white hover:bg-white/20"
-              >
-                Consultar cita
-              </Button>
-            </Link>
-          </div>
+        <span className="text-xs uppercase tracking-[0.4em] mb-4 font-semibold" style={{ color: 'var(--color-primary)' }}>
+          Experiencia Exclusiva
+        </span>
+        <h1
+          className="text-5xl md:text-7xl mb-6 text-white leading-tight"
+          style={{ fontFamily: 'var(--font-playfair, "Playfair Display"), Georgia, serif' }}
+        >
+          {business.name}
+        </h1>
+        {profile.description && (
+          <p className="max-w-xl text-lg text-gray-400 mb-10 font-light leading-relaxed">
+            {profile.description}
+          </p>
+        )}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Link href={`/${business.slug}/book`}>
+            <button
+              className="inline-flex items-center gap-2 font-bold py-4 px-10 rounded-sm transition-all uppercase tracking-widest text-sm hover:brightness-110"
+              style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-secondary)' }}
+            >
+              <CalendarCheck className="h-4 w-4" />
+              Agendar mi cita
+            </button>
+          </Link>
+          <Link href={`/${business.slug}/my-appointment`}>
+            <button className="border border-white/20 text-white font-bold py-4 px-10 rounded-sm hover:bg-white/5 transition-all uppercase tracking-widest text-sm">
+              Consultar cita
+            </button>
+          </Link>
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto px-4 py-12 space-y-16">
-        {/* Servicios */}
-        {services.length > 0 && (
-          <FadeIn><section>
-            <div className="text-center mb-8">
-              <h2 className="text-2xl md:text-3xl font-bold" style={{ color: 'var(--color-primary)' }}>
+      {/* Servicios */}
+      {services.length > 0 && (
+        <FadeIn>
+          <section className="py-24 px-6 max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <h2
+                className="text-4xl mb-3 text-white"
+                style={{ fontFamily: 'var(--font-playfair, "Playfair Display"), Georgia, serif' }}
+              >
                 Nuestros Servicios
               </h2>
-              <p className="text-muted-foreground mt-1">Elige el servicio que necesitas</p>
+              <div className="w-20 h-1 mx-auto mb-4" style={{ backgroundColor: 'var(--color-primary)' }} />
+              <p className="text-gray-500">Elige el servicio que mejor se adapte a tu estilo</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {services.map((svc) => (
-                <Card key={svc.id} className="group hover:shadow-lg transition-all duration-200 overflow-hidden border-0 shadow-sm">
+                <div
+                  key={svc.id}
+                  className="rounded-lg overflow-hidden border border-transparent transition-all duration-300"
+                  style={{ backgroundColor: '#1E1E1E' }}
+                  onMouseEnter={(e) => {
+                    const el = e.currentTarget as HTMLDivElement
+                    el.style.borderColor = 'var(--color-primary)'
+                    el.style.transform = 'translateY(-5px)'
+                    el.style.boxShadow = '0 10px 30px rgba(0,0,0,0.4)'
+                  }}
+                  onMouseLeave={(e) => {
+                    const el = e.currentTarget as HTMLDivElement
+                    el.style.borderColor = 'transparent'
+                    el.style.transform = 'translateY(0)'
+                    el.style.boxShadow = 'none'
+                  }}
+                >
                   {svc.image_url && (
                     <div className="relative h-40 overflow-hidden">
                       <Image
                         src={svc.image_url}
                         alt={svc.name}
                         fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="object-cover transition-transform duration-300 hover:scale-105"
                       />
                     </div>
                   )}
-                  <CardContent className="p-5">
-                    <h3 className="font-semibold text-lg">{svc.name}</h3>
-                    <div className="flex items-center justify-between mt-3">
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5" />
-                          {svc.duration_minutes} min
-                        </span>
-                      </div>
-                      <span className="font-bold text-lg" style={{ color: 'var(--color-primary)' }}>
+                  <div className="p-8 text-center">
+                    <h3
+                      className="text-2xl mb-2 text-white"
+                      style={{ fontFamily: 'var(--font-playfair, "Playfair Display"), Georgia, serif' }}
+                    >
+                      {svc.name}
+                    </h3>
+                    <div className="flex items-center justify-between border-t border-white/5 pt-6 mt-4">
+                      <span className="text-xs text-gray-500 uppercase tracking-tighter flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> {svc.duration_minutes} min
+                      </span>
+                      <span className="text-2xl font-semibold" style={{ color: 'var(--color-primary)' }}>
                         ${Number(svc.price).toLocaleString('es-CO')}
                       </span>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               ))}
             </div>
-            <div className="text-center mt-6">
+            <div className="text-center mt-10">
               <Link href={`/${business.slug}/book`}>
-                <Button
-                  variant="outline"
-                  className="group"
+                <button
+                  className="border font-bold py-3 px-10 rounded-sm transition-all uppercase tracking-widest text-sm inline-flex items-center gap-2 hover:brightness-110"
                   style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
                 >
-                  Reservar ahora <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                </Button>
+                  Reservar ahora <ArrowRight className="h-4 w-4" />
+                </button>
               </Link>
             </div>
-          </section></FadeIn>
-        )}
+          </section>
+        </FadeIn>
+      )}
 
-        {/* Staff */}
-        {staff.length > 0 && (
-          <FadeIn delay={100}><section>
-            <div className="text-center mb-8">
-              <h2 className="text-2xl md:text-3xl font-bold" style={{ color: 'var(--color-primary)' }}>
-                Nuestro Equipo
-              </h2>
-              <p className="text-muted-foreground mt-1">Profesionales a tu servicio</p>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {staff.map((member) => (
-                <Card key={member.id} className="text-center border-0 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-                  <CardContent className="p-5">
+      {/* Equipo */}
+      {staff.length > 0 && (
+        <FadeIn delay={100}>
+          <section className="py-24" style={{ backgroundColor: '#0a0a0a' }}>
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="text-center mb-16">
+                <h2
+                  className="text-4xl text-white mb-2"
+                  style={{ fontFamily: 'var(--font-playfair, "Playfair Display"), Georgia, serif' }}
+                >
+                  Nuestro Equipo
+                </h2>
+                <p className="text-gray-500">Profesionales a tu servicio</p>
+              </div>
+              <div className="flex flex-wrap justify-center gap-12">
+                {staff.map((member) => (
+                  <div key={member.id} className="text-center group">
                     {member.photo_url ? (
-                      <Image
-                        src={member.photo_url}
-                        alt={member.name}
-                        width={96}
-                        height={96}
-                        className="rounded-full mx-auto mb-3 object-cover w-24 h-24 ring-2 ring-offset-2"
-                        style={{ ringColor: 'var(--color-primary)' } as React.CSSProperties}
-                      />
+                      <div
+                        className="w-40 h-40 rounded-full mx-auto mb-4 overflow-hidden relative group-hover:scale-105 transition-transform"
+                        style={{ outline: '2px solid var(--color-primary)', outlineOffset: '4px' }}
+                      >
+                        <Image src={member.photo_url} alt={member.name} fill className="object-cover" />
+                      </div>
                     ) : (
                       <div
-                        className="w-24 h-24 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold text-white"
-                        style={{ backgroundColor: 'var(--color-primary)' }}
+                        className="w-40 h-40 rounded-full mx-auto mb-4 flex items-center justify-center text-4xl font-bold text-white group-hover:scale-105 transition-transform"
+                        style={{
+                          background: 'linear-gradient(135deg, #333, #222)',
+                          outline: '2px solid var(--color-primary)',
+                          outlineOffset: '4px',
+                        }}
                       >
                         {member.name.charAt(0).toUpperCase()}
                       </div>
                     )}
-                    <h3 className="font-semibold">{member.name}</h3>
+                    <h4 className="text-xl text-white font-semibold">{member.name}</h4>
                     {member.role && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{member.role}</p>
+                      <p className="text-xs uppercase tracking-widest mt-1" style={{ color: 'var(--color-primary)' }}>
+                        {member.role}
+                      </p>
                     )}
                     {member.bio && (
-                      <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{member.bio}</p>
+                      <p className="text-xs text-gray-500 mt-2 max-w-[160px] mx-auto line-clamp-2">{member.bio}</p>
                     )}
-                  </CardContent>
-                </Card>
-              ))}
+                  </div>
+                ))}
+              </div>
             </div>
-          </section></FadeIn>
-        )}
+          </section>
+        </FadeIn>
+      )}
 
-        {/* Galería */}
-        {profile.gallery_urls && profile.gallery_urls.length > 0 && (
-          <FadeIn delay={150}><section>
-            <div className="text-center mb-8">
-              <h2 className="text-2xl md:text-3xl font-bold" style={{ color: 'var(--color-primary)' }}>
+      {/* Galería */}
+      {profile.gallery_urls && profile.gallery_urls.length > 0 && (
+        <FadeIn delay={150}>
+          <section className="py-24 max-w-7xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <h2
+                className="text-4xl mb-3 text-white"
+                style={{ fontFamily: 'var(--font-playfair, "Playfair Display"), Georgia, serif' }}
+              >
                 Galería
               </h2>
+              <div className="w-20 h-1 mx-auto" style={{ backgroundColor: 'var(--color-primary)' }} />
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {profile.gallery_urls.map((url: string, i: number) => (
@@ -196,116 +224,128 @@ export default function BusinessLanding() {
                 </div>
               ))}
             </div>
-          </section></FadeIn>
-        )}
+          </section>
+        </FadeIn>
+      )}
 
-        {/* Horario + Contacto */}
-        <FadeIn delay={200}><section className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {/* Horario + Contacto */}
+      <FadeIn delay={200}>
+        <section className="py-24 max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16">
           {workingHours && Object.keys(workingHours).length > 0 && (
-            <Card className="border-0 shadow-sm">
-              <CardContent className="p-6">
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
-                  <Clock className="h-5 w-5" />
-                  Horario de Atención
-                </h2>
-                <div className="space-y-2.5">
-                  {Object.entries(workingHours).map(([day, hours]) => (
-                    <div key={day} className="flex justify-between text-sm py-1 border-b border-dashed last:border-0">
-                      <span className="capitalize font-medium">{day}</span>
-                      <span className={hours.is_open ? 'text-foreground' : 'text-muted-foreground'}>
-                        {hours.is_open
-                          ? `${hours.open_time} — ${hours.close_time}`
-                          : 'Cerrado'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card className="border-0 shadow-sm">
-            <CardContent className="p-6">
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
-                <MapPin className="h-5 w-5" />
-                Contacto
-              </h2>
-              <div className="space-y-3 text-sm">
-                {profile.address && (
-                  <div className="flex items-start gap-3 p-2.5 rounded-lg bg-muted/50">
-                    <MapPin className="h-4 w-4 mt-0.5 shrink-0" style={{ color: 'var(--color-primary)' }} />
-                    <span>{profile.address}</span>
-                  </div>
-                )}
-                {profile.phone && (
-                  <a href={`tel:${profile.phone}`} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-                    <Phone className="h-4 w-4 shrink-0" style={{ color: 'var(--color-primary)' }} />
-                    <span>{profile.phone}</span>
-                  </a>
-                )}
-                {profile.email && (
-                  <a href={`mailto:${profile.email}`} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-                    <Mail className="h-4 w-4 shrink-0" style={{ color: 'var(--color-primary)' }} />
-                    <span>{profile.email}</span>
-                  </a>
-                )}
-                <Separator />
-                <div className="flex gap-3">
-                  {socialLinks?.instagram && (
-                    <a href={`https://instagram.com/${socialLinks.instagram.replace('@', '')}`}
-                      target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/50 hover:bg-muted transition-colors flex-1">
-                      <Instagram className="h-4 w-4" style={{ color: 'var(--color-primary)' }} />
-                      <span className="text-xs truncate">{socialLinks.instagram}</span>
-                    </a>
-                  )}
-                  {socialLinks?.facebook && (
-                    <a href={socialLinks.facebook.startsWith('http') ? socialLinks.facebook : `https://facebook.com/${socialLinks.facebook}`}
-                      target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/50 hover:bg-muted transition-colors flex-1">
-                      <Star className="h-4 w-4" style={{ color: 'var(--color-primary)' }} />
-                      <span className="text-xs truncate">Facebook</span>
-                    </a>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </section></FadeIn>
-
-        {/* Footer CTA */}
-        <FadeIn delay={250}><div className="text-center pb-8">
-          <div className="rounded-2xl p-8" style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-secondary)' }}>
-            <h3 className="text-2xl font-bold mb-2">¿Listo para tu cita?</h3>
-            <p className="opacity-80 mb-5">Reserva en menos de 2 minutos</p>
-            <Link href={`/${business.slug}/book`}>
-              <Button
-                size="lg"
-                className="text-base px-8 py-5 bg-white hover:bg-white/90"
-                style={{ color: 'var(--color-primary)' }}
+            <div className="p-10 rounded-xl" style={{ backgroundColor: '#1a1a1a' }}>
+              <h3
+                className="text-2xl text-white mb-8 flex items-center gap-3"
+                style={{ fontFamily: 'var(--font-playfair, "Playfair Display"), Georgia, serif' }}
               >
-                <CalendarCheck className="h-5 w-5 mr-2" />
-                Agendar ahora
-              </Button>
+                <Clock className="h-5 w-5" style={{ color: 'var(--color-primary)' }} />
+                Horario de Atención
+              </h3>
+              <div className="space-y-4">
+                {Object.entries(workingHours).map(([day, hours]) => (
+                  <div key={day} className="flex justify-between border-b border-white/5 pb-3 last:border-0">
+                    <span className="capitalize text-gray-400">{day}</span>
+                    <span className={hours.is_open ? 'text-white font-semibold' : 'text-gray-600 italic'}>
+                      {hours.is_open ? `${hours.open_time} — ${hours.close_time}` : 'Cerrado'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="flex flex-col justify-center">
+            <h3
+              className="text-2xl text-white mb-8 flex items-center gap-3"
+              style={{ fontFamily: 'var(--font-playfair, "Playfair Display"), Georgia, serif' }}
+            >
+              <MapPin className="h-5 w-5" style={{ color: 'var(--color-primary)' }} />
+              Ubicación y Contacto
+            </h3>
+            <div className="space-y-5">
+              {profile.address && (
+                <p className="flex items-start gap-4 text-gray-400">
+                  <MapPin className="h-5 w-5 mt-0.5 shrink-0" style={{ color: 'var(--color-primary)' }} />
+                  {profile.address}
+                </p>
+              )}
+              {profile.phone && (
+                <a href={`tel:${profile.phone}`} className="flex items-center gap-4 text-gray-400 hover:text-white transition-colors">
+                  <Phone className="h-5 w-5 shrink-0" style={{ color: 'var(--color-primary)' }} />
+                  {profile.phone}
+                </a>
+              )}
+              {profile.email && (
+                <a href={`mailto:${profile.email}`} className="flex items-center gap-4 text-gray-400 hover:text-white transition-colors">
+                  <Mail className="h-5 w-5 shrink-0" style={{ color: 'var(--color-primary)' }} />
+                  {profile.email}
+                </a>
+              )}
+              <div className="flex gap-4 pt-2">
+                {socialLinks?.instagram && (
+                  <a
+                    href={`https://instagram.com/${socialLinks.instagram.replace('@', '')}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="w-10 h-10 border border-white/10 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-all"
+                    aria-label="Instagram"
+                  >
+                    <Instagram className="h-4 w-4" />
+                  </a>
+                )}
+                {socialLinks?.facebook && (
+                  <a
+                    href={socialLinks.facebook.startsWith('http') ? socialLinks.facebook : `https://facebook.com/${socialLinks.facebook}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="w-10 h-10 border border-white/10 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-all"
+                    aria-label="Facebook"
+                  >
+                    <Star className="h-4 w-4" />
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      </FadeIn>
+
+      {/* CTA Final */}
+      <FadeIn delay={250}>
+        <section className="mx-6 mb-24 rounded-2xl overflow-hidden">
+          <div className="p-12 text-center" style={{ backgroundColor: 'var(--color-primary)' }}>
+            <h2
+              className="text-4xl mb-4 font-bold"
+              style={{
+                color: 'var(--color-secondary)',
+                fontFamily: 'var(--font-playfair, "Playfair Display"), Georgia, serif',
+              }}
+            >
+              ¿Listo para renovar tu estilo?
+            </h2>
+            <p className="mb-8 font-medium" style={{ color: 'var(--color-secondary)', opacity: 0.85 }}>
+              Reserva en menos de 2 minutos y asegura tu espacio con los mejores.
+            </p>
+            <Link href={`/${business.slug}/book`}>
+              <button
+                className="px-12 py-4 rounded-sm uppercase tracking-widest text-sm font-bold hover:scale-105 transition-all"
+                style={{ backgroundColor: '#121212', color: '#E0E0E0' }}
+              >
+                Reservar Ahora
+              </button>
             </Link>
           </div>
-        </div></FadeIn>
+        </section>
+      </FadeIn>
 
-        {/* Powered by */}
-        <div className="text-center pb-4">
-          <p className="text-xs text-muted-foreground">
-            Agenda impulsada por <span className="font-semibold">Agendox</span>
-          </p>
-        </div>
-      </div>
+      {/* Footer */}
+      <footer className="py-10 text-center text-xs border-t border-white/5" style={{ color: '#555' }}>
+        <p>Agenda impulsada por <span className="font-semibold">Agendox</span></p>
+      </footer>
 
-      {/* WhatsApp Floating Button */}
+      {/* WhatsApp */}
       {whatsappNumber && (
         <a
           href={`https://wa.me/${whatsappNumber}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all"
+          className="fixed bottom-8 right-8 z-50 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all"
           aria-label="Contactar por WhatsApp"
         >
           <MessageCircle className="h-7 w-7 text-white" />

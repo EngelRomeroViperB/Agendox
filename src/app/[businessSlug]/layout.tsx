@@ -3,6 +3,14 @@ import { notFound } from 'next/navigation'
 import { BusinessProvider } from '@/lib/context/business-context'
 import type { BusinessContextType } from '@/lib/context/business-context'
 import { checkBusinessSubscription } from '@/lib/subscription-check'
+import { Playfair_Display } from 'next/font/google'
+
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  variable: '--font-playfair',
+  weight: ['700'],
+  display: 'swap',
+})
 
 export const dynamic = 'force-dynamic'
 
@@ -78,7 +86,7 @@ export default async function BusinessLayout({
   return (
     <BusinessProvider value={contextValue}>
       <div
-        className="min-h-screen"
+        className={`min-h-screen ${playfair.variable}`}
         style={{
           '--color-primary': theme.primary_color,
           '--color-secondary': theme.secondary_color,
