@@ -269,9 +269,9 @@ export default function BusinessLanding() {
                   </p>
                   <div className="rounded-lg overflow-hidden border border-white/10 mt-2">
                     <iframe
-                      src={`https://www.google.com/maps?q=${encodeURIComponent(profile.address)}&output=embed`}
+                      src={`https://maps.google.com/maps?q=${encodeURIComponent(profile.address)}&z=17&output=embed&hl=es`}
                       width="100%"
-                      height="220"
+                      height="300"
                       style={{ border: 0, filter: 'invert(90%) hue-rotate(180deg) brightness(0.95) contrast(1.1)' }}
                       allowFullScreen
                       loading="lazy"
