@@ -262,10 +262,24 @@ export default function BusinessLanding() {
             </h3>
             <div className="space-y-5">
               {profile.address && (
-                <p className="flex items-start gap-4 text-gray-400">
-                  <MapPin className="h-5 w-5 mt-0.5 shrink-0" style={{ color: 'var(--color-primary)' }} />
-                  {profile.address}
-                </p>
+                <>
+                  <p className="flex items-start gap-4 text-gray-400">
+                    <MapPin className="h-5 w-5 mt-0.5 shrink-0" style={{ color: 'var(--color-primary)' }} />
+                    {profile.address}
+                  </p>
+                  <div className="rounded-lg overflow-hidden border border-white/10 mt-2">
+                    <iframe
+                      src={`https://www.google.com/maps?q=${encodeURIComponent(profile.address)}&output=embed`}
+                      width="100%"
+                      height="220"
+                      style={{ border: 0, filter: 'invert(90%) hue-rotate(180deg) brightness(0.95) contrast(1.1)' }}
+                      allowFullScreen
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      title="Ubicación del negocio"
+                    />
+                  </div>
+                </>
               )}
               {profile.phone && (
                 <a href={`tel:${profile.phone}`} className="flex items-center gap-4 text-gray-400 hover:text-white transition-colors">
