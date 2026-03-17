@@ -18,18 +18,46 @@ const DAY_ORDER = [
 ]
 
 function GalleryCarousel({ images, businessName }: { images: string[]; businessName: string }) {
-  const [currentIndex, setCurrentIndex] = useState(0)
   const visibleCount = 3
   const total = images.length
+  const [offset, setOffset] = useState(visibleCount)
+  const [enableTransition, setEnableTransition] = useState(true)
+  const [isAnimating, setIsAnimating] = useState(false)
 
-  const prev = () => setCurrentIndex(i => (i - 1 + total) % total)
-  const next = () => setCurrentIndex(i => (i + 1) % total)
+  const extendedImages = [
+    ...images.slice(-visibleCount),
+    ...images,
+    ...images.slice(0, visibleCount),
+  ]
+  const extLen = extendedImages.length
 
-  // Build visible images array with cyclic wrapping
-  const visibleImages = Array.from({ length: Math.min(visibleCount, total) }, (_, offset) => {
-    const idx = (currentIndex + offset) % total
-    return { url: images[idx], idx }
-  })
+  const prev = () => {
+    if (isAnimating) return
+    setEnableTransition(true)
+    setIsAnimating(true)
+    setOffset(o => o - 1)
+  }
+
+  const next = () => {
+    if (isAnimating) return
+    setEnableTransition(true)
+    setIsAnimating(true)
+    setOffset(o => o + 1)
+  }
+
+  const handleTransitionEnd = () => {
+    setIsAnimating(false)
+    if (offset >= visibleCount + total) {
+      setEnableTransition(false)
+      setOffset(offset - total)
+    } else if (offset < visibleCount) {
+      setEnableTransition(false)
+      setOffset(offset + total)
+    }
+  }
+
+  const currentLogical = ((offset - visibleCount) % total + total) % total
+  const translatePct = -(offset * 100 / extLen)
 
   if (total <= visibleCount) {
     return (
@@ -45,12 +73,28 @@ function GalleryCarousel({ images, businessName }: { images: string[]; businessN
 
   return (
     <div className="relative">
-      <div className="grid grid-cols-3 gap-3">
-        {visibleImages.map(({ url, idx }) => (
-          <div key={`${currentIndex}-${idx}`} className="aspect-square relative rounded-xl overflow-hidden group animate-fade-in">
-            <Image src={url} alt={`${businessName} galería ${idx + 1}`} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
-          </div>
-        ))}
+      <div className="overflow-hidden rounded-xl">
+        <div
+          className="flex"
+          style={{
+            width: `${(extLen / visibleCount) * 100}%`,
+            transform: `translateX(${translatePct}%)`,
+            transition: enableTransition ? 'transform 0.5s ease-in-out' : 'none',
+          }}
+          onTransitionEnd={handleTransitionEnd}
+        >
+          {extendedImages.map((url, i) => (
+            <div
+              key={i}
+              className="px-1.5"
+              style={{ width: `${100 / extLen}%` }}
+            >
+              <div className="aspect-square relative rounded-xl overflow-hidden group">
+                <Image src={url} alt={`${businessName} galería ${(i % total) + 1}`} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <button
@@ -73,10 +117,15 @@ function GalleryCarousel({ images, businessName }: { images: string[]; businessN
         {images.map((_, i) => (
           <button
             key={i}
-            onClick={() => setCurrentIndex(i)}
+            onClick={() => {
+              if (isAnimating) return
+              setEnableTransition(true)
+              setIsAnimating(true)
+              setOffset(i + visibleCount)
+            }}
             className="w-2 h-2 rounded-full transition-all"
             style={{
-              backgroundColor: i === currentIndex ? 'var(--color-primary)' : 'rgba(255,255,255,0.2)',
+              backgroundColor: i === currentLogical ? 'var(--color-primary)' : 'rgba(255,255,255,0.2)',
             }}
             aria-label={`Ir a foto ${i + 1}`}
           />
