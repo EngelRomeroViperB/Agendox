@@ -1,9 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useBusiness } from '@/lib/context/business-context'
-import { Clock, MapPin, Phone, Mail, Instagram, MessageCircle, CalendarCheck, Star, ArrowRight } from 'lucide-react'
+import { Clock, MapPin, Phone, Mail, Instagram, MessageCircle, CalendarCheck, Star, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import { FadeIn } from '@/components/ui/fade-in'
 
 const DAY_ORDER = [
@@ -15,6 +16,82 @@ const DAY_ORDER = [
   { key: 'sabado', label: 'Sábado' },
   { key: 'domingo', label: 'Domingo' },
 ]
+
+function GalleryCarousel({ images, businessName }: { images: string[]; businessName: string }) {
+  const [startIndex, setStartIndex] = useState(0)
+  const visibleCount = 3
+  const maxIndex = Math.max(0, images.length - visibleCount)
+
+  const prev = () => setStartIndex(i => Math.max(0, i - 1))
+  const next = () => setStartIndex(i => Math.min(maxIndex, i + 1))
+
+  if (images.length <= visibleCount) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+        {images.map((url, i) => (
+          <div key={i} className="aspect-square relative rounded-xl overflow-hidden group">
+            <Image src={url} alt={`${businessName} galería ${i + 1}`} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <div className="relative">
+      <div className="overflow-hidden">
+        <div
+          className="flex gap-3 transition-transform duration-500 ease-in-out"
+          style={{ transform: `translateX(-${startIndex * (100 / visibleCount + 1)}%)` }}
+        >
+          {images.map((url, i) => (
+            <div
+              key={i}
+              className="aspect-square relative rounded-xl overflow-hidden group shrink-0"
+              style={{ width: `calc((100% - ${(visibleCount - 1) * 0.75}rem) / ${visibleCount})` }}
+            >
+              <Image src={url} alt={`${businessName} galería ${i + 1}`} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {startIndex > 0 && (
+        <button
+          onClick={prev}
+          className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition-colors z-10"
+          aria-label="Anterior"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+      )}
+
+      {startIndex < maxIndex && (
+        <button
+          onClick={next}
+          className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition-colors z-10"
+          aria-label="Siguiente"
+        >
+          <ChevronRight className="h-5 w-5" />
+        </button>
+      )}
+
+      <div className="flex justify-center gap-1.5 mt-4">
+        {Array.from({ length: maxIndex + 1 }, (_, i) => (
+          <button
+            key={i}
+            onClick={() => setStartIndex(i)}
+            className="w-2 h-2 rounded-full transition-all"
+            style={{
+              backgroundColor: i === startIndex ? 'var(--color-primary)' : 'rgba(255,255,255,0.2)',
+            }}
+            aria-label={`Ir a foto ${i + 1}`}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export default function BusinessLanding() {
   const { business, theme, profile, staff, services } = useBusiness()
@@ -227,13 +304,7 @@ export default function BusinessLanding() {
               </h2>
               <div className="w-20 h-1 mx-auto" style={{ backgroundColor: 'var(--color-primary)' }} />
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {profile.gallery_urls.map((url: string, i: number) => (
-                <div key={i} className="aspect-square relative rounded-xl overflow-hidden group">
-                  <Image src={url} alt={`Galería ${i + 1}`} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
-                </div>
-              ))}
-            </div>
+            <GalleryCarousel images={profile.gallery_urls} businessName={business.name} />
           </section>
         </FadeIn>
       )}
