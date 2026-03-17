@@ -42,6 +42,10 @@ export function createAdminClient() {
         set() {},
         remove() {},
       },
+      global: {
+        fetch: (input, init) =>
+          fetch(input, { ...init, cache: 'no-store' }),
+      },
     }
   )
 }
