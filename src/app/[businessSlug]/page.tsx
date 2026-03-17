@@ -18,14 +18,20 @@ const DAY_ORDER = [
 ]
 
 function GalleryCarousel({ images, businessName }: { images: string[]; businessName: string }) {
-  const [startIndex, setStartIndex] = useState(0)
+  const [currentIndex, setCurrentIndex] = useState(0)
   const visibleCount = 3
-  const maxIndex = Math.max(0, images.length - visibleCount)
+  const total = images.length
 
-  const prev = () => setStartIndex(i => Math.max(0, i - 1))
-  const next = () => setStartIndex(i => Math.min(maxIndex, i + 1))
+  const prev = () => setCurrentIndex(i => (i - 1 + total) % total)
+  const next = () => setCurrentIndex(i => (i + 1) % total)
 
-  if (images.length <= visibleCount) {
+  // Build visible images array with cyclic wrapping
+  const visibleImages = Array.from({ length: Math.min(visibleCount, total) }, (_, offset) => {
+    const idx = (currentIndex + offset) % total
+    return { url: images[idx], idx }
+  })
+
+  if (total <= visibleCount) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
         {images.map((url, i) => (
@@ -39,51 +45,38 @@ function GalleryCarousel({ images, businessName }: { images: string[]; businessN
 
   return (
     <div className="relative">
-      <div className="overflow-hidden">
-        <div
-          className="flex gap-3 transition-transform duration-500 ease-in-out"
-          style={{ transform: `translateX(-${startIndex * (100 / visibleCount + 1)}%)` }}
-        >
-          {images.map((url, i) => (
-            <div
-              key={i}
-              className="aspect-square relative rounded-xl overflow-hidden group shrink-0"
-              style={{ width: `calc((100% - ${(visibleCount - 1) * 0.75}rem) / ${visibleCount})` }}
-            >
-              <Image src={url} alt={`${businessName} galería ${i + 1}`} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
-            </div>
-          ))}
-        </div>
+      <div className="grid grid-cols-3 gap-3">
+        {visibleImages.map(({ url, idx }) => (
+          <div key={`${currentIndex}-${idx}`} className="aspect-square relative rounded-xl overflow-hidden group animate-fade-in">
+            <Image src={url} alt={`${businessName} galería ${idx + 1}`} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+          </div>
+        ))}
       </div>
 
-      {startIndex > 0 && (
-        <button
-          onClick={prev}
-          className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition-colors z-10"
-          aria-label="Anterior"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-      )}
+      <button
+        onClick={prev}
+        className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition-colors z-10"
+        aria-label="Anterior"
+      >
+        <ChevronLeft className="h-5 w-5" />
+      </button>
 
-      {startIndex < maxIndex && (
-        <button
-          onClick={next}
-          className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition-colors z-10"
-          aria-label="Siguiente"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </button>
-      )}
+      <button
+        onClick={next}
+        className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition-colors z-10"
+        aria-label="Siguiente"
+      >
+        <ChevronRight className="h-5 w-5" />
+      </button>
 
       <div className="flex justify-center gap-1.5 mt-4">
-        {Array.from({ length: maxIndex + 1 }, (_, i) => (
+        {images.map((_, i) => (
           <button
             key={i}
-            onClick={() => setStartIndex(i)}
+            onClick={() => setCurrentIndex(i)}
             className="w-2 h-2 rounded-full transition-all"
             style={{
-              backgroundColor: i === startIndex ? 'var(--color-primary)' : 'rgba(255,255,255,0.2)',
+              backgroundColor: i === currentIndex ? 'var(--color-primary)' : 'rgba(255,255,255,0.2)',
             }}
             aria-label={`Ir a foto ${i + 1}`}
           />
@@ -294,8 +287,8 @@ export default function BusinessLanding() {
       {/* Galería */}
       {profile.gallery_urls && profile.gallery_urls.length > 0 && (
         <FadeIn delay={150}>
-          <section className="py-24 max-w-7xl mx-auto px-6">
-            <div className="text-center mb-16">
+          <section className="pt-24 pb-12 max-w-7xl mx-auto px-6">
+            <div className="text-center mb-12">
               <h2
                 className="text-4xl mb-3 text-white"
                 style={{ fontFamily: 'var(--font-playfair, "Playfair Display"), Georgia, serif' }}
