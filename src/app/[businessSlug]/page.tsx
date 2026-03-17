@@ -6,6 +6,16 @@ import { useBusiness } from '@/lib/context/business-context'
 import { Clock, MapPin, Phone, Mail, Instagram, MessageCircle, CalendarCheck, Star, ArrowRight } from 'lucide-react'
 import { FadeIn } from '@/components/ui/fade-in'
 
+const DAY_ORDER = [
+  { key: 'lunes', label: 'Lunes' },
+  { key: 'martes', label: 'Martes' },
+  { key: 'miercoles', label: 'Miércoles' },
+  { key: 'jueves', label: 'Jueves' },
+  { key: 'viernes', label: 'Viernes' },
+  { key: 'sabado', label: 'Sábado' },
+  { key: 'domingo', label: 'Domingo' },
+]
+
 export default function BusinessLanding() {
   const { business, theme, profile, staff, services } = useBusiness()
 
@@ -241,11 +251,11 @@ export default function BusinessLanding() {
                 Horario de Atención
               </h3>
               <div className="space-y-4">
-                {Object.entries(workingHours).map(([day, hours]) => (
-                  <div key={day} className="flex justify-between border-b border-white/5 pb-3 last:border-0">
-                    <span className="capitalize text-gray-400">{day}</span>
-                    <span className={hours.is_open ? 'text-white font-semibold' : 'text-gray-600 italic'}>
-                      {hours.is_open ? `${hours.open_time} — ${hours.close_time}` : 'Cerrado'}
+                {DAY_ORDER.filter(d => workingHours[d.key]).map(({ key, label }) => (
+                  <div key={key} className="flex justify-between border-b border-white/5 pb-3 last:border-0">
+                    <span className="text-gray-400">{label}</span>
+                    <span className={workingHours[key].is_open ? 'text-white font-semibold' : 'text-gray-600 italic'}>
+                      {workingHours[key].is_open ? `${workingHours[key].open_time} — ${workingHours[key].close_time}` : 'Cerrado'}
                     </span>
                   </div>
                 ))}

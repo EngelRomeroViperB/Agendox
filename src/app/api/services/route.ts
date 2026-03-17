@@ -34,3 +34,27 @@ export async function POST(request: Request) {
 
   return NextResponse.json(data, { status: 201 })
 }
+
+// DELETE: Eliminar servicio por ID (superadmin)
+export async function DELETE(request: Request) {
+  const supabase = createAdminClient()
+  const { searchParams } = new URL(request.url)
+  const id = searchParams.get('id')
+  const business_id = searchParams.get('business_id')
+
+  if (!id || !business_id) {
+    return NextResponse.json({ error: 'id y business_id son requeridos' }, { status: 400 })
+  }
+
+  const { error } = await supabase
+    .from('services')
+    .delete()
+    .eq('id', id)
+    .eq('business_id', business_id)
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 400 })
+  }
+
+  return NextResponse.json({ success: true })
+}

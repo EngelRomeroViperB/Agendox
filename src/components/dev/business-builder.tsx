@@ -39,12 +39,14 @@ const DAYS = [
 ]
 
 interface ServiceInput {
+  id?: string
   name: string
   duration_minutes: number
   price: number
 }
 
 interface StaffInput {
+  id?: string
   name: string
   role: string
 }
@@ -80,8 +82,8 @@ interface BusinessBuilderProps {
       post_booking_instructions?: string
       gallery_urls?: string[]
     }
-    staff?: { name: string; role: string }[]
-    services?: { name: string; duration_minutes: number; price: number }[]
+    staff?: { id?: string; name: string; role: string }[]
+    services?: { id?: string; name: string; duration_minutes: number; price: number }[]
   }
 }
 
@@ -136,17 +138,17 @@ export function BusinessBuilder({ mode, initialData }: BusinessBuilderProps) {
   )
 
   // Sección F — Servicios Iniciales
-  const initialServiceCount = initialData?.services?.length || 0
   const [services, setServices] = useState<ServiceInput[]>(
     initialData?.services || []
   )
+  const [deletedServiceIds, setDeletedServiceIds] = useState<string[]>([])
   const [newService, setNewService] = useState<ServiceInput>({ name: '', duration_minutes: 30, price: 0 })
 
   // Sección G — Staff Inicial
-  const initialStaffCount = initialData?.staff?.length || 0
   const [staffList, setStaffList] = useState<StaffInput[]>(
     initialData?.staff || []
   )
+  const [deletedStaffIds, setDeletedStaffIds] = useState<string[]>([])
   const [newStaff, setNewStaff] = useState<StaffInput>({ name: '', role: '' })
 
   const handleSlugChange = (value: string) => {
@@ -176,6 +178,8 @@ export function BusinessBuilder({ mode, initialData }: BusinessBuilderProps) {
   }
 
   const removeService = (index: number) => {
+    const svc = services[index]
+    if (svc.id) setDeletedServiceIds(prev => [...prev, svc.id!])
     setServices(services.filter((_, i) => i !== index))
   }
 
@@ -186,6 +190,8 @@ export function BusinessBuilder({ mode, initialData }: BusinessBuilderProps) {
   }
 
   const removeStaff = (index: number) => {
+    const member = staffList[index]
+    if (member.id) setDeletedStaffIds(prev => [...prev, member.id!])
     setStaffList(staffList.filter((_, i) => i !== index))
   }
 
@@ -288,8 +294,13 @@ export function BusinessBuilder({ mode, initialData }: BusinessBuilderProps) {
         const data = await res.json()
         if (!res.ok) throw new Error(data.error)
 
-        // Crear solo servicios NUEVOS (los que se agregaron después de cargar)
-        const newServices = services.slice(initialServiceCount)
+        // Eliminar servicios que se removieron del UI
+        for (const svcId of deletedServiceIds) {
+          await fetch(`/api/services?id=${svcId}&business_id=${businessId}`, { method: 'DELETE' })
+        }
+
+        // Crear solo servicios NUEVOS (sin id = no existen en BD)
+        const newServices = services.filter(s => !s.id)
         if (newServices.length > 0 && businessId) {
           await fetch('/api/services', {
             method: 'POST',
@@ -298,8 +309,13 @@ export function BusinessBuilder({ mode, initialData }: BusinessBuilderProps) {
           })
         }
 
-        // Crear solo staff NUEVO (los que se agregaron después de cargar)
-        const newStaffMembers = staffList.slice(initialStaffCount)
+        // Eliminar staff que se removió del UI
+        for (const staffId of deletedStaffIds) {
+          await fetch(`/api/staff?id=${staffId}&business_id=${businessId}`, { method: 'DELETE' })
+        }
+
+        // Crear solo staff NUEVO (sin id = no existe en BD)
+        const newStaffMembers = staffList.filter(s => !s.id)
         if (newStaffMembers.length > 0 && businessId) {
           await fetch('/api/staff', {
             method: 'POST',
